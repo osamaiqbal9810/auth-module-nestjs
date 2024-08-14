@@ -38,6 +38,17 @@ export class UserService {
         return deletedUser.deletedCount
     }
 
+    async resetPassword(token: string, newPassword: string): Promise<User> {
+        const user = await this.getUserByResetToken(token)
+        if (user != null) {
+            const salt = await bcrypt.genSalt()
+            const hashedPassword = await bcrypt.hash(newPassword, salt)
+            return await this.UserModel.findOneAndUpdate({_id: user._id}, {hashedPassword: hashedPassword, resetToken: ""}, {new: true})
+        }
+        
+        return null
+    }
+
     // async sendForgotPasswordEmail(email: string) {
     //     const message = `Forgot your password? If you didn't forget your password, please ignore this email!.`;
 
@@ -66,6 +77,9 @@ export class UserService {
         return await this.UserModel.findOne({ email: email })
     }
 
+    async getUserByResetToken(token: string) {
+        return this.UserModel.findOne({resetToken: token})
+    }
     async saveResetToken(user: User, token: string) {
         return await this.UserModel.findOneAndUpdate({email: user.email}, {resetToken: token}, {upsert: true, new: true})
     }

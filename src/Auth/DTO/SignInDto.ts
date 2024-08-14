@@ -13,3 +13,10 @@ export class SignInDto {
     @IsStrongPassword()
     password: string
 }
+
+export class PasswordResetDto {
+    @ApiProperty()
+    @IsString()
+    @IsStrongPassword()
+    newPassword: string
+}

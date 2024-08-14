@@ -6,6 +6,7 @@ import { User } from '../Schema/user.schema';
 import { response } from 'express';
 import { PasswordDto } from '../DTO/PasswordDto';
 import { AuthGuard } from 'src/Auth/auth.guard';
+import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 @Controller('user')
 export class UserControllerController {
     constructor(private readonly userService: UserService) { }
@@ -84,6 +85,33 @@ export class UserControllerController {
                 error: 'User not found'
             });
         }
+    } catch(err) {
+        return response.status(HttpStatus.BAD_REQUEST).json({
+            statusCode: response.statusCode,
+            message: response.message,
+            error: 'Bad Request'
+        });
+    }
+    }
+
+    @Post("/reset-password")
+    @ApiQuery({name: 'reset-token', type: String})
+    @ApiBody({type: PasswordResetDto})
+    async resetPassword(@Response() response, @Query("reset-token") token: string, @Body() resetDto: PasswordResetDto) {
+        try {
+        let result = await this.userService.resetPassword(token, resetDto.newPassword)
+       if (result) {
+            return response.status(HttpStatus.OK).json({
+                message: "Password updated successfully"
+            })
+
+       } else {
+        return response.status(HttpStatus.NOT_MODIFIED).json({
+            statusCode: response.statusCode,
+            message: response.message,
+            error: 'Bad Request'
+        });
+       }
     } catch(err) {
         return response.status(HttpStatus.BAD_REQUEST).json({
             statusCode: response.statusCode,
