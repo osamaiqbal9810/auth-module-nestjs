@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Query, Response, UseGuards } from '@nestjs/common';
-import { UserService } from '../service/user-service/user-service.service';
+import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';

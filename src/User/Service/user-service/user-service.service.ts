@@ -65,4 +65,8 @@ export class UserService {
     async getUser(email: string): Promise<User> {
         return await this.UserModel.findOne({ email: email })
     }
+
+    async saveResetToken(user: User, token: string) {
+        return await this.UserModel.findOneAndUpdate({email: user.email}, {resetToken: token}, {upsert: true, new: true})
+    }
 }

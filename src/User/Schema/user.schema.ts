@@ -19,7 +19,10 @@ export class User extends Document {
     @IsStrongPassword()
     @Prop()
     hashedPassword: String
-    existingUser: Promise<string>;
+    
+    @IsString()
+    @Prop()
+    resetToken: String
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

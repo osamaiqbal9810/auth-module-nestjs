@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './User/Schema/user.schema';
 import { UserControllerController } from './User/Controller/user-controller.controller';
-import { UserService } from './User/service/user-service/user-service.service';
+import { UserService } from './User/Service/user-service/user-service.service';
 import { AuthController } from './Auth/Controller/auth.controller';
 import { AuthService } from './Auth/Service/auth.service';
 import { JwtModule } from '@nestjs/jwt';
@@ -28,14 +28,6 @@ import * as path from 'path';
         auth: {
           user: process.env.EMAIL_USERNAME,
           pass: process.env.EMAIL_PASSWORD,
-        },
-      },
-      template: {
-        dir:path.resolve(__dirname, '.././src/User/Service/user-service'),
-        adapter: new PugAdapter({  inlineCssEnabled: true,
-          inlineCssOptions: {},}),
-        options: {
-          strict: true,
         },
       }
     }),
