@@ -43,44 +43,20 @@ export class UserService {
         if (user != null) {
             const salt = await bcrypt.genSalt()
             const hashedPassword = await bcrypt.hash(newPassword, salt)
-            return await this.UserModel.findOneAndUpdate({_id: user._id}, {hashedPassword: hashedPassword, resetToken: ""}, {new: true})
+            return await this.UserModel.findOneAndUpdate({_id: user._id}, {hashedPassword: hashedPassword, resetToken: "", tokenExpiryDate: ""}, {new: true})
         }
         
         return null
     }
 
-    // async sendForgotPasswordEmail(email: string) {
-    //     const message = `Forgot your password? If you didn't forget your password, please ignore this email!.`;
-
-    //     this.mailService.sendMail({
-    //       from: 'osamaiqbalcs@gmail.com',
-    //       to: 'osamaiqbalcs@gmail.com',
-    //       subject: `Forgot Password`,
-    //       template: "./EmailTempalte",
-    //       text: message,
-    //     });
-    // }
-
-    // async forgotPassword(passwordDto: PasswordDto): Promise<User | null> {
-    //     let existingUser = await this.findOne(passwordDto.email)
-    //     if (existingUser) {
-    //         let salt = await bcrypt.genSalt()
-    //         let hash = await bcrypt.hash(passwordDto.password.toString(), salt)
-    //         const updatedUser = await this.UserModel.findOneAndUpdate({email: passwordDto.email}, {hashedPassword: hash}, {new: true})
-    //        return updatedUser
-    //     }
-    //     return null
-    // }
-
-
     async getUser(email: string): Promise<User> {
         return await this.UserModel.findOne({ email: email })
     }
 
-    async getUserByResetToken(token: string) {
-        return this.UserModel.findOne({resetToken: token})
+    async getUserByResetToken(token: string): Promise<User> {
+        return this.UserModel.findOne({resetToken: token, tokenExpiryDate: {$gt: new Date()}})
     }
-    async saveResetToken(user: User, token: string) {
-        return await this.UserModel.findOneAndUpdate({email: user.email}, {resetToken: token}, {upsert: true, new: true})
+    async saveResetTokenAndExpiry(user: User, token: string, tokenExpiryDate: Date) {
+        await this.UserModel.findOneAndUpdate({email: user.email}, {resetToken: token, tokenExpiryDate: tokenExpiryDate}, {upsert: true, new: true})
     }
 }

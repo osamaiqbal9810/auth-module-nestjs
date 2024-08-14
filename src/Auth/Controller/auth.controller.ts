@@ -38,7 +38,25 @@ export class AuthController {
     }
     @Post("/forgotPassword")
     @ApiBody({type: PasswordDto})
-    async generatePasswordResetToken(@Body() passwordDto: PasswordDto) {
-        this.authService.generatePasswordResetToken(passwordDto.email)
+    async generatePasswordResetToken(@Response() res, @Body() passwordDto: PasswordDto) {
+        try {
+          let result = this.authService.generatePasswordResetToken(passwordDto.email)
+          if (result) {
+            res.status(HttpStatus.OK).json({
+                message: "An email has been sent to you including password reset link, you can reset password using this link"
+            })
+          } else {
+            res.status(HttpStatus.NOT_FOUND).json({
+                message: "User not found"
+            })
+          }
+
+        } catch(err) {
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                statusCode: res.statusCode,
+                message: res.message,
+                error: 'Bad Request'
+            });
+        }
     }
 }

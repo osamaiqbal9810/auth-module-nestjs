@@ -24,20 +24,22 @@ export class AuthService {
        return null
     }
 
-    async generatePasswordResetToken(email: string): Promise<void> {
+    async generatePasswordResetToken(email: string): Promise<boolean> {
         const user = await this.userService.findOne(email);
         if (!user) {
-          throw new Error('User not found');
+            const token = uuidv4(); // Generate a unique token
+            const expirationDate = new Date();
+            expirationDate.setMinutes(expirationDate.getMinutes() + 5)
+
+            await this.sendForgotPasswordEmail(user, token, expirationDate);
+            return true
         }
-    
-        const token = uuidv4(); // Generate a unique token
-        const expirationDate = new Date();
-        await this.sendForgotPasswordEmail(user, token);
+        return false
       }
 
-      async sendForgotPasswordEmail(user: User, token: string) {
+      async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date) {
        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-       await this.userService.saveResetToken(user, token)
+       await this.userService.saveResetTokenAndExpiry(user, token, expirationDate)
         this.mailService.sendMail({
           from: 'osamaiqbalcs@gmail.com',
           to: 'osamaiqbalcs@gmail.com',
