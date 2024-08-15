@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Request } from '@nestjs/common';
 import { SignInDto } from '../DTO/SignInDto';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import * as bcrypt from 'bcrypt';
@@ -15,7 +15,7 @@ export class AuthService {
         if (existingUser != null) {
             const existingPassword = existingUser.hashedPassword.toString()
             const isMatch = await bcrypt.compare(signInDto.password, existingPassword);
-            console.log(isMatch)
+           
             if (isMatch == true) {
                 const payload = {_id: existingUser._id.toString()}
               return { access_token: await this.jwtService.signAsync(payload) }
@@ -24,25 +24,26 @@ export class AuthService {
        return null
     }
 
-    async generatePasswordResetToken(email: string): Promise<boolean> {
+    async generatePasswordResetToken(email: string, serverUrl: string): Promise<boolean> {
         const user = await this.userService.findOne(email);
-        if (!user) {
+        if (user) {
             const token = uuidv4(); // Generate a unique token
             const expirationDate = new Date();
             expirationDate.setMinutes(expirationDate.getMinutes() + 5)
-
-            await this.sendForgotPasswordEmail(user, token, expirationDate);
-            return true
+            let emailSent = await this.sendForgotPasswordEmail(user, token, expirationDate, serverUrl);
+            return emailSent ? true : false
         }
         return false
       }
 
-      async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date) {
-       const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+      async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date, serverUrl: string): Promise<boolean> {
+       const resetUrl = `${serverUrl}/reset-password?token=${token}`;
+       console.log(process.env.EMAIL_USERNAME, user.email.toString())
        await this.userService.saveResetTokenAndExpiry(user, token, expirationDate)
+      
         this.mailService.sendMail({
-          from: 'osamaiqbalcs@gmail.com',
-          to: 'osamaiqbalcs@gmail.com',
+          from: process.env.EMAIL_USERNAME,
+          to: user.email.toString(),
           subject: `Forgot Password`,
           html: 
           `<!DOCTYPE html>
@@ -65,6 +66,8 @@ export class AuthService {
             </body>
             </html>`
         });
+
+        return true
     }
 }
 

@@ -55,7 +55,7 @@ export class UserService {
     async getUserByResetToken(token: string): Promise<User> {
         return this.UserModel.findOne({resetToken: token, tokenExpiryDate: {$gt: new Date()}})
     }
-    async saveResetTokenAndExpiry(user: User, token: string, tokenExpiryDate: Date) {
+    async saveResetTokenAndExpiry(user: User, token: string, tokenExpiryDate: Date): Promise<void> {
         await this.UserModel.findOneAndUpdate({email: user.email}, {resetToken: token, tokenExpiryDate: tokenExpiryDate}, {upsert: true, new: true})
     }
 }

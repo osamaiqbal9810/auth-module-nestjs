@@ -11,7 +11,7 @@ export class User extends Document {
     @IsString()
     @IsNotEmpty()
     @IsEmail()
-    @Prop()
+    @Prop({ unique: true })
     email: String
     
     @IsString()

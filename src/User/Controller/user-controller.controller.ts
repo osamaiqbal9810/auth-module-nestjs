@@ -3,8 +3,6 @@ import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';
-import { response } from 'express';
-import { PasswordDto } from '../DTO/PasswordDto';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 @Controller('user')
@@ -24,10 +22,10 @@ export class UserControllerController {
                 message: 'User has been created successfully',
                 user
             });
-        } catch (err) {
+        } catch (error) {
             return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: res.statusCode,
-                message: res.message,
+                statusCode: error.statusCode,
+                message: error.message,
                 error: 'Bad Request'
             });
         }
@@ -57,10 +55,10 @@ export class UserControllerController {
                 existingUser
             })
         }
-        } catch (err) {
+        } catch (error) {
             return response.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: response.statusCode,
-                message: response.message,
+                statusCode: error.statusCode,
+                message: error.message,
                 error: 'Bad Request'
             });
         }
@@ -87,8 +85,8 @@ export class UserControllerController {
         }
     } catch(err) {
         return response.status(HttpStatus.BAD_REQUEST).json({
-            statusCode: response.statusCode,
-            message: response.message,
+            statusCode: err.statusCode,
+            message: err.message,
             error: 'Bad Request'
         });
     }
@@ -114,8 +112,8 @@ export class UserControllerController {
        }
     } catch(err) {
         return response.status(HttpStatus.BAD_REQUEST).json({
-            statusCode: response.statusCode,
-            message: response.message,
+            statusCode: err.statusCode,
+            message: err.message,
             error: 'Bad Request'
         });
     }
