@@ -45,7 +45,6 @@ export class UserService {
             const hashedPassword = await bcrypt.hash(newPassword, salt)
             return await this.UserModel.findOneAndUpdate({_id: user._id}, {hashedPassword: hashedPassword, resetToken: "", tokenExpiryDate: ""}, {new: true})
         }
-        
         return null
     }
 

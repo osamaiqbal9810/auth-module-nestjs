@@ -93,7 +93,9 @@ export class UserControllerController {
         });
     }
     }
-
+    @ApiResponse({status: 200, description: "Password updated successfully"})
+    @ApiResponse({status: 404, description: "Password update failed. Reset token may got expired."})
+    @ApiResponse({status: 400, description: "Error: Bad Request"})
     @Post("/reset-password")
     @ApiQuery({name: 'reset-token', type: String})
     @ApiBody({type: PasswordResetDto})
@@ -102,14 +104,12 @@ export class UserControllerController {
         let result = await this.userService.resetPassword(token, resetDto.newPassword)
        if (result) {
             return response.status(HttpStatus.OK).json({
-                message: "Password updated successfully"
+                message: "Password updated successfully."
             })
 
        } else {
-        return response.status(HttpStatus.NOT_MODIFIED).json({
-            statusCode: response.statusCode,
-            message: response.message,
-            error: 'Bad Request'
+        return response.status(HttpStatus.NOT_FOUND).json({
+            message: "Password update failed. Reset token may got expired."
         });
        }
     } catch(err) {
@@ -120,55 +120,4 @@ export class UserControllerController {
         });
     }
     }
-
-    // forgot password
-    // @ApiBearerAuth()
-    // @ApiResponse({status: 304, description: "Password update failed"})
-    // @ApiResponse({status: 202, description: "Password updated successfully"})
-    // @ApiResponse({status: 404, description:"Not found"})
-    // @Post("/forgotPassword")
-    // @ApiBody({ type: PasswordDto})
-    // async forgotPassword(@Response() response, @Body() passwordDto: PasswordDto) {
-    //     try {
-    //  const mail = await this.userService.sendForgotPasswordEmail(passwordDto.email)
-    //   return response.status(200).json({
-    //     message: 'success',
-    //     mail,
-    //   });
-  
-
-    // } catch(err) {
-    //     return response.status(HttpStatus.BAD_REQUEST).json({
-    //         statusCode: response.statusCode,
-    //         message: response.message,
-    //         error: 'Bad Request'
-    //     });
-    // }
-
-    // }
-
-
-    // async forgotPassword(@Response() response, @Body() passwordDto: PasswordDto) {
-    //     try {
-    //     const updatedUser = await this.userService.forgotPassword(passwordDto)
-    //     if (updatedUser != null) {
-    //        return response.status(HttpStatus.ACCEPTED).json({
-    //             message: "Password Updated Successfully.",
-    //             updatedUser
-    //         })
-    //     }
-    //     else {
-    //         return response.status(HttpStatus.NOT_MODIFIED).json({
-    //             message: "Password Update Failed",
-    //         })
-    //     }
-    // } catch(err) {
-    //     return response.status(HttpStatus.BAD_REQUEST).json({
-    //         statusCode: response.statusCode,
-    //         message: response.message,
-    //         error: 'Bad Request'
-    //     });
-    // }
-
-    // }
 }

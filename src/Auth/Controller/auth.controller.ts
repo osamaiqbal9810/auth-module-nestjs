@@ -36,6 +36,10 @@ export class AuthController {
             });
         }
     }
+
+    @ApiResponse({status: 200, description: "An email has been sent to you including password reset link, you can reset password using this link"})
+    @ApiResponse({status: 200, description: "User not found"})
+    @ApiResponse({status: 400, description: "Error: Bad Request"})
     @Post("/forgotPassword")
     @ApiBody({type: PasswordDto})
     async generatePasswordResetToken(@Response() res, @Body() passwordDto: PasswordDto) {
