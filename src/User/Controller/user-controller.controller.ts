@@ -66,8 +66,8 @@ export class UserController {
     }
 
         // find user by Id
-  //  @UseGuards(AuthGuard)
-  //  @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
     @ApiResponse({status: 302, description:"User found"})
     @ApiResponse({status: 404, description:"User not found"})
     @ApiQuery({name: 'id', type: String})
@@ -98,7 +98,7 @@ export class UserController {
         }
     }
     // delete user
-//    @ApiBearerAuth()
+    @ApiBearerAuth()
     @ApiResponse({status: 202, description:"User deleted successfully"})
     @ApiResponse({status: 404, description:"User not found"})
     @Delete()
