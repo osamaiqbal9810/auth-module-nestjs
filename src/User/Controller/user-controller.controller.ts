@@ -6,7 +6,7 @@ import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 @Controller('user')
-export class UserControllerController {
+export class UserController {
     constructor(private readonly userService: UserService) { }
 
     // sign up
@@ -41,6 +41,7 @@ export class UserControllerController {
     async findOne(@Response() response, @Query('email') email: String): Promise<User> {
         try {
             const existingUser = await this.userService.findOne(email)
+            console.log(existingUser)
             if (existingUser != null) {
                 // user exist
             return response.status(HttpStatus.FOUND).json({
@@ -64,15 +65,47 @@ export class UserControllerController {
         }
     }
 
+        // find user by Id
+  //  @UseGuards(AuthGuard)
+  //  @ApiBearerAuth()
+    @ApiResponse({status: 302, description:"User found"})
+    @ApiResponse({status: 404, description:"User not found"})
+    @ApiQuery({name: 'id', type: String})
+    @Get("/id")
+    async findOneById(@Response() response, @Query('id') id: String): Promise<User> {
+        try {
+            const existingUser = await this.userService.findOneById(id)
+            if (existingUser) {
+                // user exist
+            return response.status(HttpStatus.FOUND).json({
+                message: "User found!",
+                existingUser
+            })
+        } else {
+            /// user doesn't exist
+            return response.status(HttpStatus.NOT_FOUND).json({
+                statusCode: HttpStatus.NOT_FOUND,
+                message: "User doesn't exist!",
+                existingUser
+            })
+        }
+        } catch (error) {
+            return response.status(HttpStatus.BAD_REQUEST).json({
+                statusCode: error.statusCode,
+                message: error.message,
+                error: 'Bad Request'
+            });
+        }
+    }
     // delete user
-    @ApiBearerAuth()
+//    @ApiBearerAuth()
     @ApiResponse({status: 202, description:"User deleted successfully"})
     @ApiResponse({status: 404, description:"User not found"})
     @Delete()
     async deleteUser(@Response() response, @Query('email') email: string): Promise<number> {
         try {
-            let deletedCount = await this.userService.deleteUser(email)
-            if (deletedCount > 0) {
+            let deletedUser = await this.userService.deleteUser(email)
+            if (deletedUser) {
             return response.status(HttpStatus.ACCEPTED).json({
             message: "User deleted successfully"
          })

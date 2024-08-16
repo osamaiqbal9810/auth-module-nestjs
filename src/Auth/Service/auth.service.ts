@@ -6,20 +6,22 @@ import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { User } from 'src/User/Schema/user.schema';
+import { PrismaService } from 'src/prisma.service';
 @Injectable()
 export class AuthService {
-    constructor(private userService: UserService,  private jwtService: JwtService,private readonly mailService: MailerService) {}
+    constructor(private prismaService: PrismaService,private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
 
     async signIn(signInDto: SignInDto): Promise<{access_token: string}> {
-        const existingUser = await this.userService.getUser(signInDto.email)
+        const existingUser = await this.prismaService.users.findFirst({
+            where: {email: signInDto.email},
+            include: {password: true}
+        })
         if (existingUser != null) {
-            const existingPassword = existingUser.hashedPassword.toString()
-            const isMatch = await bcrypt.compare(signInDto.password, existingPassword);
-           
-            if (isMatch == true) {
-                const payload = {_id: existingUser._id.toString()}
-              return { access_token: await this.jwtService.signAsync(payload) }
-            }
+             const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
+             if (isMatch == true) {
+                 const payload = {_id: existingUser.id.toString()}
+               return { access_token: await this.jwtService.signAsync(payload) }
+             }
         }
        return null
     }
@@ -38,9 +40,9 @@ export class AuthService {
 
       async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date, serverUrl: string): Promise<boolean> {
        const resetUrl = `${serverUrl}/reset-password?token=${token}`;
-       console.log(process.env.EMAIL_USERNAME, user.email.toString())
-       await this.userService.saveResetTokenAndExpiry(user, token, expirationDate)
-      
+       // save token and token expiry in db to validate at time when user provide new password
+        let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate) //TODO: 
+      if (isTokenSaved) {
         this.mailService.sendMail({
           from: process.env.EMAIL_USERNAME,
           to: user.email.toString(),
@@ -66,8 +68,9 @@ export class AuthService {
             </body>
             </html>`
         });
-
         return true
+    }
+        return false
     }
 }
 
