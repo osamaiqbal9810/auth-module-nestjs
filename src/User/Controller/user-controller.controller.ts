@@ -34,26 +34,25 @@ export class UserController {
     // find user
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiResponse({status: 302, description:"User found"})
+    @ApiResponse({status: 200, description:"User found"})
     @ApiResponse({status: 404, description:"User not found"})
     @ApiQuery({name: 'email', type: String})
     @Get()
     async findOne(@Response() response, @Query('email') email: String): Promise<User> {
         try {
             const existingUser = await this.userService.findOne(email)
-            console.log(existingUser)
+
             if (existingUser != null) {
                 // user exist
-            return response.status(HttpStatus.FOUND).json({
+            return response.status(HttpStatus.OK).json({
                 message: "User found!",
-                existingUser
+                user: existingUser
             })
         } else {
             /// user doesn't exist
             return response.status(HttpStatus.NOT_FOUND).json({
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "User doesn't exist!",
-                existingUser
+                message: "User doesn't exist!"
             })
         }
         } catch (error) {
@@ -68,7 +67,7 @@ export class UserController {
         // find user by Id
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
-    @ApiResponse({status: 302, description:"User found"})
+    @ApiResponse({status: 200, description:"User found"})
     @ApiResponse({status: 404, description:"User not found"})
     @ApiQuery({name: 'id', type: String})
     @Get("/id")
@@ -77,16 +76,15 @@ export class UserController {
             const existingUser = await this.userService.findOneById(id)
             if (existingUser) {
                 // user exist
-            return response.status(HttpStatus.FOUND).json({
+            return response.status(HttpStatus.OK).json({
                 message: "User found!",
-                existingUser
+                user:existingUser
             })
         } else {
             /// user doesn't exist
             return response.status(HttpStatus.NOT_FOUND).json({
                 statusCode: HttpStatus.NOT_FOUND,
-                message: "User doesn't exist!",
-                existingUser
+                message: "User doesn't exist!"
             })
         }
         } catch (error) {
@@ -99,14 +97,14 @@ export class UserController {
     }
     // delete user
     @ApiBearerAuth()
-    @ApiResponse({status: 202, description:"User deleted successfully"})
+    @ApiResponse({status: 200, description:"User deleted successfully"})
     @ApiResponse({status: 404, description:"User not found"})
     @Delete()
     async deleteUser(@Response() response, @Query('email') email: string): Promise<number> {
         try {
             let deletedUser = await this.userService.deleteUser(email)
             if (deletedUser) {
-            return response.status(HttpStatus.ACCEPTED).json({
+            return response.status(HttpStatus.OK).json({
             message: "User deleted successfully"
          })
         } else {
