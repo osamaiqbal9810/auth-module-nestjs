@@ -8,6 +8,7 @@ export class UsersPassword {
 
     @IsString()
     @IsStrongPassword()
+    @IsNotEmpty()
     hashedPassword: String
 
     @IsString()

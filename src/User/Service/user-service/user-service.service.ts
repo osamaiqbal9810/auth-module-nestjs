@@ -2,10 +2,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
 import { validateOrReject } from 'class-validator'
-import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
-import { UsersPassword } from 'src/User/Schema/user-password.schema';
 
 
 @Injectable()
