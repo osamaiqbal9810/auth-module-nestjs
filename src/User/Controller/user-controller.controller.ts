@@ -69,9 +69,9 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({status: 200, description:"User found"})
     @ApiResponse({status: 404, description:"User not found"})
-    @ApiQuery({name: 'id', type: String})
-    @Get("/id")
-    async findOneById(@Response() response, @Query('id') id: String): Promise<User> {
+    @ApiParam({name: 'id', type: String})
+    @Get("/:id")
+    async findOneById(@Response() response, @Param('id') id: String): Promise<User> {
         try {
             const existingUser = await this.userService.findOneById(id)
             if (existingUser) {
@@ -103,6 +103,34 @@ export class UserController {
     async deleteUser(@Response() response, @Query('email') email: string): Promise<number> {
         try {
             let deletedUser = await this.userService.deleteUser(email)
+            if (deletedUser) {
+            return response.status(HttpStatus.OK).json({
+            message: "User deleted successfully"
+         })
+        } else {
+            return response.status(HttpStatus.NOT_FOUND).json({
+                statusCode: response.statusCode,
+                message: response.message,
+                error: 'User not found'
+            });
+        }
+    } catch(err) {
+        return response.status(HttpStatus.BAD_REQUEST).json({
+            statusCode: err.statusCode,
+            message: err.message,
+            error: 'Bad Request'
+        });
+    }
+    }
+
+    @ApiBearerAuth()
+    @ApiResponse({status: 200, description:"User deleted successfully"})
+    @ApiResponse({status: 404, description:"User not found"})
+    @ApiParam({type: String, name: 'id'})
+    @Delete("/:id")
+    async deleteUserById(@Response() response, @Param('id') id: string): Promise<number> {
+        try {
+            let deletedUser = await this.userService.deleteUserById(id)
             if (deletedUser) {
             return response.status(HttpStatus.OK).json({
             message: "User deleted successfully"

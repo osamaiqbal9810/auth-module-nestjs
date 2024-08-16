@@ -16,7 +16,7 @@ export class AuthService {
             where: {email: signInDto.email},
             include: {password: true}
         })
-        if (existingUser != null) {
+        if (existingUser) {
              const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
              if (isMatch == true) {
                  const payload = {_id: existingUser.id.toString()}

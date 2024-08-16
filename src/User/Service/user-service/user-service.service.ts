@@ -57,6 +57,10 @@ export class UserService {
         return await this.prismaService.users.delete({ where: { email: email } })
     }
 
+    async deleteUserById(id: string): Promise<User> {
+        return await this.prismaService.users.delete({ where: { id: id } })
+    }
+
     async resetPassword(token: string, newPassword: string): Promise<boolean> {
         const user = await this.getUserByResetToken(token)
         if (user) {
