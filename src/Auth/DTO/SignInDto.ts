@@ -15,6 +15,11 @@ export class SignInDto {
 }
 
 export class PasswordResetDto {
+
+    @ApiProperty()
+    @IsEmail()
+    email: string
+    
     @ApiProperty()
     @IsString()
     @IsStrongPassword()

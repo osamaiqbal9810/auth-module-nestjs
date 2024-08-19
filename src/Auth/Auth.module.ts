@@ -6,6 +6,8 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PrismaService } from "src/prisma.service";
+import { APP_GUARD } from "@nestjs/core";
+import { AuthGuard } from "./auth.guard";
 
 
 @Module({

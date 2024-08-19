@@ -27,12 +27,13 @@ export class AuthService {
     }
 
     async generatePasswordResetToken(email: string, serverUrl: string): Promise<boolean> {
-        const user = await this.userService.findOne(email);
+        const user = await this.userService.findOneByEmail(email);
         if (user) {
             const token = uuidv4(); // Generate a unique token
             const expirationDate = new Date();
             expirationDate.setMinutes(expirationDate.getMinutes() + 5)
             let emailSent = await this.sendForgotPasswordEmail(user, token, expirationDate, serverUrl);
+            console.log(emailSent)
             return emailSent ? true : false
         }
         return false
@@ -41,8 +42,11 @@ export class AuthService {
       async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date, serverUrl: string): Promise<boolean> {
        const resetUrl = `${serverUrl}/reset-password?token=${token}`;
        // save token and token expiry in db to validate at time when user provide new password
-        let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate) //TODO: 
-      if (isTokenSaved) {
+        let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate) 
+        if (!isTokenSaved) {
+            return false
+        }
+
         this.mailService.sendMail({
           from: process.env.EMAIL_USERNAME,
           to: user.email.toString(),
@@ -69,8 +73,6 @@ export class AuthService {
             </html>`
         });
         return true
-    }
-        return false
     }
 }
 

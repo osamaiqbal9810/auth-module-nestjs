@@ -1,4 +1,5 @@
-import {IsEmail, IsNotEmpty, IsString } from "class-validator";
+import {IsArray, IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { Role } from "../Roles/Role.enum";
 
 export class User {
 
@@ -15,4 +16,8 @@ export class User {
     @IsEmail()
 
     email: String
+
+    @IsArray()
+    @IsNotEmpty()
+    roles: String[]
 }
