@@ -23,7 +23,7 @@ export class UserService {
                   email: dto.email.toLowerCase().toString(),
                   roles: dto.roles.map((role) => {
                     if (!Object.values(Role).includes(role.toString())) {
-                        throw new Error(`Invalid Role`)
+                        throw new Error(`Invalid Role`) // if invalid role is provided then stop user creation
                     }
                     return role.toString()
                 })
