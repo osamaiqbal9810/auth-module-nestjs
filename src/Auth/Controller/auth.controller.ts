@@ -71,7 +71,7 @@ export class AuthController {
     async generatePasswordResetToken(@Request() req, @Response() res, @Body() passwordDto: PasswordDto): Promise<any> {
         try {
         const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
-          let result = await this.authService.generatePasswordResetToken(passwordDto.email, serverUrl)
+          let result = await this.authService.generatePasswordResetToken(passwordDto.email.toLowerCase(), serverUrl)
           if (result) {
            return res.status(HttpStatus.OK).json({
                 message: "An email has been sent to you including password reset link, you can reset password using this link"

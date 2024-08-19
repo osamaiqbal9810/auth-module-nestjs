@@ -20,7 +20,7 @@ export class UserService {
             const user = await prisma.users.create({
                 data: {
                   name: dto.name.toString(),
-                  email: dto.email.toString(),
+                  email: dto.email.toLowerCase().toString(),
                   roles: dto.roles
                 },
               });
@@ -69,7 +69,7 @@ export class UserService {
     }
 
     async resetPassword(token: string, passwordDto: PasswordResetDto): Promise<boolean> {
-        const user = await this.getUserByEmailAndResetToken(passwordDto.email, token)
+        const user = await this.getUserByEmailAndResetToken(passwordDto.email.toLowerCase(), token)
         if (!user) {
             return false
         }

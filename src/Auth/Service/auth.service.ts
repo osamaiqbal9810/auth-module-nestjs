@@ -13,7 +13,7 @@ export class AuthService {
 
     async signIn(signInDto: SignInDto): Promise<{access_token: string}> {
         const existingUser = await this.prismaService.users.findFirst({
-            where: {email: signInDto.email},
+            where: {email: signInDto.email.toLowerCase()},
             include: {password: true}
         })
         if (existingUser) {
@@ -49,7 +49,7 @@ export class AuthService {
 
         this.mailService.sendMail({
           from: process.env.EMAIL_USERNAME,
-          to: user.email.toString(),
+          to: user.email.toLowerCase().toString(),
           subject: `Forgot Password`,
           html: 
           `<!DOCTYPE html>
