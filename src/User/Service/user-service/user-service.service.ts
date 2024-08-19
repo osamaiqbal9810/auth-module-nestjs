@@ -32,7 +32,6 @@ export class UserService {
                   userId: user.id,
                 },
               });
-
               return user
         })
         return result

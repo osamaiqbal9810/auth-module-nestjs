@@ -8,7 +8,7 @@ config() // for populating process.env
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
-    .setTitle("Auth Module")
+    .setTitle("Baseline Server")
     .setVersion('1.0')
     .addBearerAuth()
     .build();
