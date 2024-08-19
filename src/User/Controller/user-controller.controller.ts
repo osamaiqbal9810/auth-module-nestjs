@@ -16,6 +16,7 @@ export class UserController {
     @ApiResponse({ status: 200, description: 'The user has been created successfully.' })
     @ApiResponse({ status: 400, description: 'Error:User Not Created.' })
     @ApiResponse({ status: 404, description: 'Cannot POST /user.' })
+    
     @Post()
     async createUser(@Response() res, @Body() dto: UserDto): Promise<String> {
         try {
@@ -38,6 +39,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: "User found" })
     @ApiResponse({ status: 404, description: "User not found" })
+    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed' })
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
@@ -50,6 +52,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: "User found" })
     @ApiResponse({ status: 404, description: "User not found" })
+    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed' })
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
     @Roles(Role.Admin)
@@ -86,6 +89,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: "User deleted successfully" })
     @ApiResponse({ status: 404, description: "User not found" })
+    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed' })
     @Delete()
     @Roles(Role.Admin)
 
@@ -98,6 +102,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiResponse({ status: 200, description: "User deleted successfully" })
     @ApiResponse({ status: 404, description: "User not found" })
+    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed' })
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
     @Roles(Role.Admin)
