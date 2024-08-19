@@ -21,7 +21,12 @@ export class UserService {
                 data: {
                   name: dto.name.toString(),
                   email: dto.email.toLowerCase().toString(),
-                  roles: dto.roles
+                  roles: dto.roles.map((role) => {
+                    if (!Object.values(Role).includes(role.toString())) {
+                        throw new Error(`Invalid Role`)
+                    }
+                    return role.toString()
+                })
                 },
               });
         
