@@ -6,7 +6,7 @@ import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { RolesGuard } from '../roles.guard';
-import { Role, Roles, ROLES_KEY } from '../Roles/Role.enum';
+import { Role, Roles, ROLES_KEY } from '../enums/Role.enum';
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) { }

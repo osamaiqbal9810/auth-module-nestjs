@@ -11,7 +11,7 @@ import { PrismaService } from 'src/prisma.service';
 export class AuthService {
     constructor(private prismaService: PrismaService,private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
 
-    async signIn(signInDto: SignInDto): Promise<{access_token: string}> {
+    async signIn(signInDto: SignInDto): Promise<{access_token: string, user: User}> {
         const existingUser = await this.prismaService.users.findFirst({
             where: {email: signInDto.email.toLowerCase()},
             include: {password: true}
@@ -20,7 +20,7 @@ export class AuthService {
              const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
              if (isMatch == true) {
                  const payload = {_id: existingUser.id.toString()}
-               return { access_token: await this.jwtService.signAsync(payload) }
+               return { access_token: await this.jwtService.signAsync(payload), user: existingUser }
              }
         }
        return null

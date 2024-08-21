@@ -1,5 +1,4 @@
 import {IsArray, IsEmail, IsNotEmpty, IsString } from "class-validator";
-import { Role } from "../Roles/Role.enum";
 
 export class User {
 

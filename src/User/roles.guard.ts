@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role, ROLES_KEY } from './Roles/Role.enum';
+import { Role, ROLES_KEY } from './enums/Role.enum';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './Service/user-service/user-service.service';
@@ -42,6 +42,7 @@ export class RolesGuard implements CanActivate {
 
                 return requiredRoles.some((role) => roleIndexes?.includes(role));
             }
+            return false
 
         } catch {
             throw new UnauthorizedException();

@@ -3,25 +3,47 @@ generator client {
 }
 
 datasource db {
-  provider = env("DB_PROVIDER")
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model users {
-  id       String          @id @default(auto()) @map("_id") @db.ObjectId
-  v        Int             @default(0) @map("__v")
-  email    String          @unique(map: "email_1")
-  name     String
-  roles    String[]
-  password userspasswords?
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  v                Int             @default(0) @map("__v")
+  email            String          @unique(map: "email_1")
+  name             String
+  roles            String[]
+  password         userspasswords?
+  files            files[]
+  subscriptionPlan String
+  isRemoved        Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model files {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  originalFileName String
+  newFileName      String
+  filePath         String
+  userId           String   @db.ObjectId
+  user             users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  v                Int      @default(0) @map("__v")
+  fileSize         BigInt
+  isRemoved        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model userspasswords {
-  id              String  @id @default(auto()) @map("_id") @db.ObjectId
-  v               Int     @default(0) @map("__v")
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  v               Int      @default(0) @map("__v")
   hashedPassword  String
   resetToken      String?
   tokenExpiryDate Json?
-  userId          String  @unique() @db.ObjectId
-  user            users?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String   @unique() @db.ObjectId
+  user            users?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isRemoved       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

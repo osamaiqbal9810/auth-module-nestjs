@@ -1,11 +1,12 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
 import { validateOrReject } from 'class-validator'
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
-import { Role, Roles } from 'src/User/Roles/Role.enum';
+import { Role } from 'src/User/enums/Role.enum';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
+import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
 
 
 @Injectable()
@@ -16,38 +17,46 @@ export class UserService {
         await validateOrReject(dto);
         let salt = await bcrypt.genSalt()
         let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
-        const result = await  this.prismaService.$transaction(async (prisma) => {
+        const result = await this.prismaService.$transaction(async (prisma) => {
             const user = await prisma.users.create({
                 data: {
-                  name: dto.name.toString(),
-                  email: dto.email.toLowerCase().toString(),
-                  roles: dto.roles.map((role) => {
-                    if (!Object.values(Role).includes(role.toString())) {
-                        throw new Error(`Invalid Role`) // if invalid role is provided then stop user creation
-                    }
-                    return role.toString()
-                })
+                    name: dto.name.toString(),
+                    email: dto.email.toLowerCase().toString(),
+                    roles: dto.roles.map((role) => {
+                        if (!Object.values(Role).includes(role.toString())) {
+                            throw new Error(`Invalid Role value`) // if invalid role is provided then stop user creation
+                        }
+                        return role.toString()
+                    }),
+                    subscriptionPlan: (() => {
+                        const plan = dto.subscriptionPlan.toString();
+                        if (Object.values(SubscriptionPlan).includes(plan)) {
+                            return dto.subscriptionPlan.valueOf()
+                        }
+                        throw new Error(`Invalid Subscription plan value`) // if invalid role is provided then stop user creation
+                    })()
                 },
-              });
-        
-              // Step 2: Create the password entry for the user
-              await prisma.userspasswords.create({
+            });
+
+            // Step 2: Create the password entry for the user
+            await prisma.userspasswords.create({
                 data: {
-                  hashedPassword: hashedPassword,
-                  userId: user.id,
+                    hashedPassword: hashedPassword,
+                    userId: user.id,
                 },
-              });
-              return user
+            });
+            return user
         })
         return result
     }
 
+
     async findOneByEmail(email: String): Promise<User> {
-        return this.find(async () => await this.prismaService.users.findFirst({ where: { email: email.toString() } }))
+        return this.find(async () => await this.prismaService.users.findFirst({ where: { email: email.toString(), isRemoved: false } }))
     }
 
     async findOneById(id: String): Promise<User> {
-        return this.find(async () => await this.prismaService.users.findFirst({ where: { id: id.toString() } }))
+        return this.find(async () => await this.prismaService.users.findFirst({ where: { id: id.toString(), isRemoved: false } }))
     }
 
     async find(userRecord: () => Promise<User>): Promise<User> {
@@ -65,11 +74,17 @@ export class UserService {
     }
 
     async deleteUser(email: string): Promise<User> {
-        return await this.prismaService.users.delete({ where: { email: email } })
+        return await this.prismaService.users.update({
+            where: {email: email},
+            data: {isRemoved: true}
+        })
     }
 
     async deleteUserById(id: string): Promise<User> {
-        return await this.prismaService.users.delete({ where: { id: id } })
+        return await this.prismaService.users.update({ 
+            where: { id: id },
+            data: {isRemoved: true} 
+        })
     }
 
     async resetPassword(token: string, passwordDto: PasswordResetDto): Promise<boolean> {
@@ -88,7 +103,7 @@ export class UserService {
 
     async getUserByEmailAndResetToken(email: string, token: string): Promise<User> {
         let userObj = await this.prismaService.userspasswords.findFirst({
-            where: { resetToken: token, user: {email: email} },
+            where: { resetToken: token, user: { email: email } },
             include: { user: true },
         });
 
