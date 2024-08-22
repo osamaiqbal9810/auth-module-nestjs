@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, Req, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Get, HttpStatus, Post, Req, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { diskStorage } from "multer";
@@ -7,7 +7,7 @@ import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/FileDto";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
-import { Request } from "express";
+import { Request, response } from "express";
 
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
@@ -39,7 +39,7 @@ export class FileController {
       let fileDto = new FileDto()
       fileDto.fileName = file.filename
       fileDto.originalName = file.originalname
-      fileDto.path = `uploads/${file.filename}`
+      fileDto.path = `${process.env.FILEUPLOAD_URL}/${file.filename}`
       fileDto.fileSize = file.size
       const user = await FileUtilsService.getUserFromRequest(request)
       if (user) {
@@ -53,8 +53,7 @@ export class FileController {
         }
         else {
           return res.status(HttpStatus.EXPECTATION_FAILED).json({
-            message: "Fail to save file metadata",
-            fileInfo: fileDto
+            message: res.message
           })
         }
       }
@@ -67,11 +66,32 @@ export class FileController {
 
 
   @Get()
-  async getFile(@Req() request: Request) {
-    const userId = request['user']?._id;
-    if (userId) {
-      this.fileService.getAllFilesForUser(userId)
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  async getUserFiles(@Req() request: Request, @Response() response) {
+    try {
+      const userId = request['user']?._id;
+      if (userId) {
+        const files = await this.fileService.getAllFilesForUser(userId);
+       // console.log(files)
+        if (files) {
+          return response.status(HttpStatus.OK).json({
+            message: "Files fetching success",
+            files
+          })
+        }
+        else {
+          return response.status(HttpStatus.EXPECTATION_FAILED).json({
+            message: response.message
+          })
+        }
+      }
+    } catch (err) {
+      return response.status(HttpStatus.BAD_REQUEST).json({
+        message: err.message
+      })
     }
   }
+
 }
 

@@ -15,14 +15,24 @@ export class FilesService {
                 newFileName: fileDto.fileName,
                 filePath: fileDto.path,
                 userId: fileDto.userId,
-                fileSize: fileDto.fileSize.valueOf() // Number to number
+                fileSize: fileDto.fileSize.valueOf() // `Number` to `number`
             }
         });
     }
 
-    async getAllFilesForUser(id: string) {
-        await this.prismaService.files.findMany({
+    async getAllFilesForUser(id: string): Promise<FileDto[]> {
+    const files = await this.prismaService.files.findMany({
             where: {userId: id, isRemoved: false}
+        })
+
+        return  files.map((file)=> {
+            const dto = new FileDto()
+            dto.originalName = file.originalFileName
+            dto.fileName = file.newFileName
+            dto.path = file.filePath
+            dto.fileSize = Number(file.fileSize)
+            dto.userId = file.userId
+            return dto
         })
     }
 }

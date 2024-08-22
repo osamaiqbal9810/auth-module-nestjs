@@ -20,7 +20,6 @@ export class FileUtilsService {
   ) => {
     // Extract the file extension from the original filename
     const fileExtName = extname(file.originalname);
-    // TODO: fileName
     var guid = randomUUID()
     const newFilename = `${guid}${fileExtName}`;
     callback(null, newFilename);
