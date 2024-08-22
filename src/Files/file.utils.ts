@@ -16,43 +16,50 @@ export class FileUtilsService {
   static fileNameEditor = (
     _req: Request,
     file: Express.Multer.File,
-    callback: (error: any, filename: string) => void
+    callback: (error: Error, filename: string) => void
   ) => {
-    // Extract the file extension from the original filename
-    const fileExtName = extname(file.originalname);
-    var guid = randomUUID()
-    const newFilename = `${guid}${fileExtName}`;
-    callback(null, newFilename);
-
+    try {
+      // Extract the file extension from the original filename
+      const fileExtName = extname(file.originalname);
+      var guid = randomUUID()
+      const newFilename = `${guid}${fileExtName}`;
+      callback(null, newFilename);
+    } catch (err) {
+      return callback(new BadRequestException(new BadRequestException("fileNameEditor Error")), "")
+    }
   };
 
   static fileFilter = async (
     req: Request,
-    file: any,
-    callback: (error: any, valid: boolean) => void,
+    file: Express.Multer.File,
+    callback: (error: Error, valid: boolean) => void,
   ) => {
-    const fileExt = extname(file.originalname)
-    if (Object.values(AllowedFileTypes).includes(fileExt as AllowedFileTypes)) {
-      // storage Quota implementation
-      const user = await FileUtilsService.getUserFromRequest(req)
-      // Quota Implementation
-      let totalUserFilesSize: bigint = BigInt(0);
-      user.files.forEach((file) => {
-        if (!file.isRemoved) {
-          // Ensure fileSize is converted to BigInt if it isn't already
-          const fileSize: bigint = BigInt(file.fileSize);
-          // Accumulate the file sizes
-          totalUserFilesSize += fileSize;
+    try {
+      const fileExt = extname(file.originalname)
+      if (Object.values(AllowedFileTypes).includes(fileExt as AllowedFileTypes)) {
+        // storage Quota implementation
+        const user = await FileUtilsService.getUserFromRequest(req)
+        // Quota Implementation
+        let totalUserFilesSize: bigint = BigInt(0);
+        user.files.forEach((file) => {
+          if (!file.isRemoved) {
+            // Ensure fileSize is converted to BigInt if it isn't already
+            const fileSize: bigint = BigInt(file.fileSize);
+            // Accumulate the file sizes
+            totalUserFilesSize += fileSize;
+          }
+        });
+        const userAllowedQuota = planProperties[SubscriptionPlan[user.subscriptionPlan as keyof typeof SubscriptionPlan]]
+        if (totalUserFilesSize > userAllowedQuota.quota) {
+          return callback(new NotAcceptableException(`Your allowed quota has been overwhelmed. Please upgrade your plan or delete some files to continue using our services.`), false)
         }
-      });
-      const userAllowedQuota = planProperties[SubscriptionPlan[user.subscriptionPlan as keyof typeof SubscriptionPlan]]
-      if (totalUserFilesSize > userAllowedQuota.quota) {
-        return callback(new NotAcceptableException(`Your allowed quota has been overwhelmed. Please upgrade your plan or delete some files to continue using our services.`), false)
+        // console.log(`fileSize:`, totalUserFilesSize)
+        callback(null, true)
+      } else {
+        return callback(new BadRequestException(`Only ${Object.keys(AllowedFileTypes).map((type) => `${type}`)} documents are allowed.`), false);
       }
-      // console.log(`fileSize:`, totalUserFilesSize)
-      callback(null, true)
-    } else {
-      return callback(new BadRequestException(`Only ${Object.keys(AllowedFileTypes).map((type) => `${type}`)} documents are allowed.`), false);
+    } catch (err) {
+      return callback(new BadRequestException("fileFilter Error"), false);
     }
   }
 

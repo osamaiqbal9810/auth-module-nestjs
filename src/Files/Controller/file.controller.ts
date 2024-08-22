@@ -12,6 +12,7 @@ import { Request, response } from "express";
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
+import { error } from "console";
 // import { fileFilter, fileNameEditor, getUserFromRequest } from "../file.utils";
 @Controller('files')
 export class FileController {
@@ -58,40 +59,44 @@ export class FileController {
         }
       }
     } catch (err) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        message: err.message
-      })
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: err.message
+        })
     }
   }
 
-
-  @Get()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard)
-  async getUserFiles(@Req() request: Request, @Response() response) {
-    try {
-      const userId = request['user']?._id;
-      if (userId) {
-        const files = await this.fileService.getAllFilesForUser(userId);
-       // console.log(files)
-        if (files) {
-          return response.status(HttpStatus.OK).json({
-            message: "Files fetching success",
-            files
-          })
+    @Get()
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
+    async getUserFiles(@Req() request: Request, @Response() response) {
+      try {
+        const userId = request['user']?._id;
+        if (userId) {
+          const files = await this.fileService.getAllFilesForUser(userId);
+          // console.log(files)
+          if (files) {
+            return response.status(HttpStatus.OK).json({
+              message: "Files fetching success",
+              files
+            })
+          }
+          else {
+            return response.status(HttpStatus.EXPECTATION_FAILED).json({
+              message: response.message
+            })
+          }
         }
         else {
-          return response.status(HttpStatus.EXPECTATION_FAILED).json({
+          return response.status(HttpStatus.NOT_FOUND).json({
             message: response.message
           })
         }
-      }
-    } catch (err) {
-      return response.status(HttpStatus.BAD_REQUEST).json({
-        message: err.message
-      })
+      } catch (err) {
+        return response.status(HttpStatus.BAD_REQUEST).json({
+          message: err.message
+        })
     }
-  }
 
+  }
 }
 

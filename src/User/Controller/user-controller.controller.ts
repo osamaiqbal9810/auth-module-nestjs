@@ -125,7 +125,7 @@ export class UserController {
                     error: 'User not found'
                 });
             }
-        } catch (err) {
+        } catch(err) {
             return response.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: err.statusCode,
                 message: err.message,
@@ -153,7 +153,7 @@ export class UserController {
                     message: "Password update failed. Reset token may got expired"
                 });
             }
-        } catch (err) {
+        } catch(err) {
             return response.status(HttpStatus.BAD_REQUEST).json({
                 statusCode: err.statusCode,
                 message: err.message,
