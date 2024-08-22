@@ -4,6 +4,7 @@ import { Role, ROLES_KEY } from './enums/Role.enum';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './Service/user-service/user-service.service';
+import { FileUtilsService } from 'src/Files/file.utils';
 @Injectable()
 export class RolesGuard implements CanActivate {
     constructor(private reflector: Reflector, private jwtService: JwtService, private userService: UserService) { }

@@ -6,7 +6,6 @@ import { BadRequestException, Injectable, NotAcceptableException } from '@nestjs
 import { randomUUID } from 'crypto';
 import { PrismaService } from 'src/prisma.service';
 import { planProperties, SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
-import { subscriptionLogsToBeFn } from 'rxjs/internal/testing/TestScheduler';
 
 @Injectable()
 export class FileUtilsService {
@@ -53,7 +52,6 @@ export class FileUtilsService {
         if (totalUserFilesSize > userAllowedQuota.quota) {
           return callback(new NotAcceptableException(`Your allowed quota has been overwhelmed. Please upgrade your plan or delete some files to continue using our services.`), false)
         }
-        // console.log(`fileSize:`, totalUserFilesSize)
         callback(null, true)
       } else {
         return callback(new BadRequestException(`Only ${Object.keys(AllowedFileTypes).map((type) => `${type}`)} documents are allowed.`), false);

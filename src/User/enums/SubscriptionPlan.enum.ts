@@ -1,11 +1,14 @@
-import { BASIC_PLAN_FILES_SIZE_LIMIT, 
+import { 
+    BASIC_PLAN_FILES_SIZE_LIMIT, 
     PREMIUM_PLAN_FILES_SIZE_LIMIT, 
-    STANDARD_PLAN_FILES_SIZE_LIMIT } from "src/Files/file-constnats";
+    STANDARD_PLAN_FILES_SIZE_LIMIT 
+} 
+from "src/Files/file-constnats";
 
 export enum SubscriptionPlan {
-    Basic,
-    Standard,
-    Premium
+    Basic, // 100MB
+    Standard, // 1 GB
+    Premium // 100 GB
 }
 
 interface PlanProperties {

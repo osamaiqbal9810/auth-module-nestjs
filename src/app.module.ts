@@ -7,7 +7,7 @@ import { PrismaService } from './prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -21,8 +21,8 @@ import { join } from 'path';
       }
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
-      serveRoot: '/uploads', // URL path prefix for serving static files,
+      rootPath: path.join(process.cwd(), process.env.FILEUPLOAD_DIR),
+      serveRoot: `/${process.env.FILEUPLOAD_DIR}`, // URL path prefix for serving static files,
       serveStaticOptions: {
         index: false
        },

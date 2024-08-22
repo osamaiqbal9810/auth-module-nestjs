@@ -17,6 +17,7 @@ async function bootstrap() {
     swaggerOptions: { defaultModelsExpandDepth: -1 }
   });
   app.useGlobalPipes(new ValidationPipe()) // schema validation
+  //app.use('/files/upload', (req, res, next) => new ProgressMiddleware().use(req, res, next));
   await app.listen(3000);
 }
 

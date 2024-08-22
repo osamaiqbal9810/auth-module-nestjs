@@ -3,6 +3,8 @@ import { FileDto } from "../DTO/FileDto";
 import { PrismaService } from "src/prisma.service";
 import { planProperties, SubscriptionPlan } from "src/User/enums/SubscriptionPlan.enum";
 import { files } from "@prisma/client";
+import * as path from "path";
+import * as fs from 'fs';
 
 @Injectable()
 export class FilesService {
@@ -27,6 +29,7 @@ export class FilesService {
 
         return  files.map((file)=> {
             const dto = new FileDto()
+            dto.id = file.id
             dto.originalName = file.originalFileName
             dto.fileName = file.newFileName
             dto.path = file.filePath
@@ -34,5 +37,20 @@ export class FilesService {
             dto.userId = file.userId
             return dto
         })
+    }
+
+    async deleteFile(fileId: string): Promise<boolean> {
+        const deletedFile = await this.prismaService.files.update({
+            where: {id: fileId},
+            data: {
+                isRemoved: true
+            }
+        })
+        if (deletedFile) {
+            const filePath = `/${process.env.FILEUPLOAD_DIR}/${deletedFile.newFileName}`
+            const unlink = await fs.promises.unlink(filePath);
+            return true
+        }
+        return false
     }
 }

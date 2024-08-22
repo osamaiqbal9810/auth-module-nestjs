@@ -33,7 +33,6 @@ export class AuthService {
             const expirationDate = new Date();
             expirationDate.setMinutes(expirationDate.getMinutes() + 5)
             let emailSent = await this.sendForgotPasswordEmail(user, token, expirationDate, serverUrl);
-            console.log(emailSent)
             return emailSent ? true : false
         }
         return false
