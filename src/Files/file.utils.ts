@@ -1,6 +1,6 @@
 
 import { extname, join } from 'path';
-import { Request } from 'express';
+ import { Request } from 'express';
 import { AllowedFileTypes } from './file-types.enum';
 import { BadRequestException, Injectable, NotAcceptableException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
@@ -63,11 +63,12 @@ export class FileUtilsService {
 
 
   static getUserFromRequest = async (request: Request) => {
-    const userId = request['user']?._id;
-    if (!userId) {
+    const userObj = request['user'] as { _id: string; iat: number; exp: number };
+    if (!userObj || !userObj._id) {
       throw new BadRequestException({ message: "No user found. Invalid authorization token" });
     }
     // Get the prismaService from the holder
+    const userId = userObj._id
     const prismaService = FileUtilsHolder.getPrismaService();
     const user = await prismaService.users.findFirst({
       where: { id: userId, isRemoved: false },

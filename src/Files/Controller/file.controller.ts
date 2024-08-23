@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpStatus, Post, Query, Req, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Delete, Get, HttpStatus, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { diskStorage } from "multer";
@@ -7,13 +7,13 @@ import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/FileDto";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
-import { Request, response } from "express";
+
 
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
-import { error } from "console";
 import { DeleteFileDto } from "../DTO/DeleteFileDto";
+
 
 @Controller('files')
 export class FileController {
@@ -39,7 +39,7 @@ export class FileController {
   @ApiResponse({ status: 200, description: "File uploaded successfully" })
   @ApiResponse({ status: 417, description: "Failed to upload file" })
   @ApiResponse({ status: 400, description: "Bad Request" })
-  async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Req() request: Request) {
+  async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Request() request) {
     try {
       if (!file) {
         throw new Error('No file uploaded');

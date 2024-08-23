@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
 import { validateOrReject } from 'class-validator'
@@ -7,16 +7,16 @@ import { PrismaService } from 'src/prisma.service';
 import { Role } from 'src/User/enums/Role.enum';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
+import { AuthService } from 'src/Auth/Service/auth.service';
 
 
 @Injectable()
 export class UserService {
-    constructor(private prismaService: PrismaService) { }
+    constructor(private prismaService: PrismaService,  @Inject(forwardRef(() => AuthService)) private authService: AuthService) { }
 
     async createUser(dto: UserDto): Promise<User> {
-        await validateOrReject(dto);
-        let salt = await bcrypt.genSalt()
-        let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
+      //  await validateOrReject(dto);
+       
         const result = await this.prismaService.$transaction(async (prisma) => {
             const user = await prisma.users.create({
                 data: {
@@ -37,11 +37,12 @@ export class UserService {
                     })()
                 },
             });
-
+            let salt = await bcrypt.genSalt()
+            let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
             // Step 2: Create the password entry for the user
             await prisma.userspasswords.create({
                 data: {
-                    hashedPassword: hashedPassword,
+                    hashedPassword:  hashedPassword,
                     userId: user.id,
                 },
             });
@@ -119,6 +120,41 @@ export class UserService {
             data: { resetToken: token, tokenExpiryDate: tokenExpiryDate }
         })
         return result ? true : false
+    }
+
+
+    // google log in
+
+    async createGmailUser(dto: UserDto): Promise<{access_token: string}> {
+        let existingUser = await this.findOneByEmail(dto.email)
+        if (!existingUser) {
+        const user = await this.prismaService.users.create({
+            data: {
+              name: dto.name.toString(),
+              email: dto.email.toLowerCase().toString(),
+              roles: dto.roles.map((role) => {
+                if (!Object.values(Role).includes(role.toString())) {
+                  throw new Error(`Invalid Role value`);
+                }
+                return role.toString();
+              }),
+              subscriptionPlan: (() => {
+                const plan = dto.subscriptionPlan.toString();
+                if (Object.values(SubscriptionPlan).includes(plan)) {
+                  return dto.subscriptionPlan.valueOf();
+                }
+                throw new Error(`Invalid Subscription plan value`);
+              })(),
+            },
+          });
+          const payload = { _id: user.id }
+         return { access_token: await this.authService.generateJWT(payload)  }
+        }
+        else {
+            const payload = { _id: existingUser.id }
+            return { access_token: await this.authService.generateJWT(payload)  }
+        }
+         
     }
 
 }

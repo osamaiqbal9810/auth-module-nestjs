@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { AuthController } from "./Controller/auth.controller";
 import { AuthService } from "./Service/auth.service";
 import { UsersModule } from "src/User/Users.module";
@@ -6,13 +6,13 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PrismaService } from "src/prisma.service";
-import { APP_GUARD } from "@nestjs/core";
-import { AuthGuard } from "./auth.guard";
+import { GoogleStrategy } from "src/Strategies/google.strategy";
+import { UserService } from "src/User/Service/user-service/user-service.service";
 
 
 @Module({
     imports:[    
-        UsersModule,
+      forwardRef(() => UsersModule),
         ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({
         global: true,
@@ -30,7 +30,7 @@ import { AuthGuard } from "./auth.guard";
       }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, PrismaService],
+    providers: [AuthService, PrismaService, GoogleStrategy],
     exports:[AuthService]
 })
 

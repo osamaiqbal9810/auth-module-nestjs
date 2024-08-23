@@ -10,7 +10,6 @@ export class SignInDto {
 
     @ApiProperty()
     @IsString()
-    @IsStrongPassword()
     password: string
 }
 

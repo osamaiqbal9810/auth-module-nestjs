@@ -5,26 +5,24 @@ export class UserDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    readonly name: String
+     name: String
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
     @IsEmail()
-    readonly email: String
+    email: String
 
     @ApiProperty()
     @IsString()
-     @IsNotEmpty()
-    @IsStrongPassword()
-    readonly password: String
+    password: String
 
     @ApiProperty()
     @IsNotEmpty()
-    readonly roles: String[]
+    roles: String[]
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    readonly subscriptionPlan: String
+    subscriptionPlan: String
 }
