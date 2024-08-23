@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpStatus, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Controller, Delete, Get, HttpStatus, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBearerAuth, ApiQuery, ApiResponse } from "@nestjs/swagger";
 import { diskStorage } from "multer";
@@ -13,6 +13,7 @@ import { UserService } from "src/User/Service/user-service/user-service.service"
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
 import { DeleteFileDto } from "../DTO/DeleteFileDto";
+
 
 
 @Controller('files')
@@ -66,9 +67,7 @@ export class FileController {
         }
       }
     } catch (err) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        message: err.message
-      })
+      throw new BadRequestException()
     }
   }
 
@@ -101,9 +100,7 @@ export class FileController {
         })
       }
     } catch (err) {
-      return response.status(HttpStatus.BAD_REQUEST).json({
-        message: err.message
-      })
+      throw new BadRequestException()
     }
   }
 
@@ -128,9 +125,7 @@ export class FileController {
         })
       }
     } catch (error) {
-      return response.status(HttpStatus.BAD_REQUEST).json({
-        message: error.message
-      })
+      throw new BadRequestException()
     }
   }
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
@@ -40,11 +40,7 @@ export class AuthController {
                 })
             }
         } catch (error) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: error.statusCode,
-                message: error.message,
-                error: 'Bad Request'
-            });
+            throw new BadRequestException()
         }
     }
 
@@ -58,11 +54,7 @@ export class AuthController {
             res.clearCookie('jwt')
             res.status(200).json({ message: 'Signed out successfully' });
         } catch (err) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: err.statusCode,
-                message: err.message,
-                error: 'Bad Request'
-            });
+            throw new BadRequestException()
         }
     }
 
@@ -88,11 +80,7 @@ export class AuthController {
             }
 
         } catch (error) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: error.statusCode,
-                message: error.message,
-                error: 'Bad Request'
-            });
+            throw new BadRequestException()
         }
     }
 
@@ -106,28 +94,32 @@ export class AuthController {
     @Get('google/callback')
     @UseGuards(GoogleOauthGuard)
     async googleAuthCallback(@Req() req, @Response() res) {
-        let user = req['user']
-        if (user) {
-            const userDto = new UserDto()
-            userDto.name = user.name
-            userDto.email = user.email
-            userDto.roles = ["Admin"]  // TODO
-            userDto.subscriptionPlan = "Basic"  // TODO
-            const token = await this.authService.authGmailUser(userDto)
-            res.cookie('access_token', token.access_token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
-                sameSite: 'strict', // Helps prevent CSRF attacks
-            });
-            console.log(token)
-            return res.status(HttpStatus.OK).json({
-                access_token: token.access_token,
-                user: user
-            });
+        try {
+            let user = req['user']
+            if (user) {
+                const userDto = new UserDto()
+                userDto.name = user.name
+                userDto.email = user.email
+                userDto.roles = ["Admin"]  // TODO
+                userDto.subscriptionPlan = "Basic"  // TODO
+                const token = await this.authService.authGmailUser(userDto)
+                res.cookie('access_token', token.access_token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
+                    sameSite: 'strict', // Helps prevent CSRF attacks
+                });
+                console.log(token)
+                return res.status(HttpStatus.OK).json({
+                    access_token: token.access_token,
+                    user: user
+                });
+            }
+            return res.status(HttpStatus.FAILED_DEPENDENCY).json({
+                message: "User not found"
+            })
+        } catch (error) {
+            throw new BadRequestException()
         }
-        return res.status(HttpStatus.FAILED_DEPENDENCY).json({
-            message: "User not found"
-        })
     }
 
 }

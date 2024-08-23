@@ -39,7 +39,7 @@ export class RolesGuard implements CanActivate {
                     console.error('User not found in the request object');
                     return false;
                 }
-                const roleIndexes = roles.map((role: string) => Role[role as keyof typeof Role]);
+                const roleIndexes = roles.map((role: String) => Role[role as keyof typeof Role]);
 
                 return requiredRoles.some((role) => roleIndexes?.includes(role));
             }

@@ -7,6 +7,8 @@ import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { RolesGuard } from '../roles.guard';
 import { Role, Roles, ROLES_KEY } from '../enums/Role.enum';
+import { BadRequestException } from '@nestjs/common';
+
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) { }
@@ -26,11 +28,7 @@ export class UserController {
                 user
             });
         } catch (error) {
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: error.statusCode,
-                message: error.message,
-                error: 'Bad Request'
-            });
+              throw new BadRequestException()
         }
     }
 
@@ -76,11 +74,7 @@ export class UserController {
                 });
             }
         } catch (error) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: error.statusCode || HttpStatus.BAD_REQUEST,
-                message: error.message || 'Bad Request',
-                error: 'Bad Request',
-            });
+            throw new BadRequestException()
         }
     }
 
@@ -126,11 +120,7 @@ export class UserController {
                 });
             }
         } catch(err) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: err.statusCode,
-                message: err.message,
-                error: 'Bad Request'
-            });
+            throw new BadRequestException()
         }
     }
 
@@ -154,11 +144,7 @@ export class UserController {
                 });
             }
         } catch(err) {
-            return response.status(HttpStatus.BAD_REQUEST).json({
-                statusCode: err.statusCode,
-                message: err.message,
-                error: 'Bad Request'
-            });
+            throw new BadRequestException()
         }
     }
 }
