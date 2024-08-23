@@ -11,7 +11,7 @@ import { AuthModule } from 'src/Auth/Auth.module';
 @Module({
     imports: [forwardRef(() => AuthModule)],
     controllers:[UserController],
-    providers:[UserService,PrismaService, {provide: APP_GUARD, useClass: RolesGuard}, FilesService],
+    providers:[UserService,PrismaService, FilesService],
     exports: [UserService, FilesService],
 })
 

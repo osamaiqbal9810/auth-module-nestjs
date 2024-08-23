@@ -5,13 +5,17 @@ import {
     UnauthorizedException,
   } from '@nestjs/common';
   import { JwtService } from '@nestjs/jwt';
+import { PrismaClient, users } from '@prisma/client';
 
   import { Request } from 'express';
+import { PrismaService } from 'src/prisma.service';
+import { User } from 'src/User/Schema/user.schema';
+import { UserService } from 'src/User/Service/user-service/user-service.service';
 
 
   @Injectable()
   export class AuthGuard implements CanActivate {
-    constructor(private jwtService: JwtService) {}
+    constructor(private jwtService: JwtService, private userService: UserService) {}
   
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest();
@@ -27,9 +31,17 @@ import {
           }
         );
 
+        if (!payload || !payload._id) {
+          throw new UnauthorizedException()
+        }
+        const user: users = await this.userService.findOneById(payload._id) as users
+        if (!user || !user.isRemoved) {
+          throw new UnauthorizedException()
+        }
+        
         // 💡 We're assigning the payload to the request object here
         // so that we can access it in our route handlers
-        request.user = payload;
+        request.user = payload; //TODO Do we need to attach complete user?
       } catch {
         throw new UnauthorizedException();
       }

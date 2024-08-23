@@ -1,9 +1,8 @@
 import { BadRequestException, Controller, Delete, Get, HttpStatus, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiQuery, ApiResponse } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/FileDto";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
@@ -13,16 +12,19 @@ import { UserService } from "src/User/Service/user-service/user-service.service"
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
 import { DeleteFileDto } from "../DTO/DeleteFileDto";
+import { RolesGuard } from "src/User/roles.guard";
+import { Roles } from "src/roles.decorator";
+import { Role } from "src/User/enums/Role.enum";
 
 
 
 @Controller('files')
 export class FileController {
   constructor(private readonly fileService: FilesService, private readonly userService: UserService) { }
-
+  @ApiTags("Files")
   @Post("/upload")
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+
   // Rate limiting is applied to this route.
   @SkipThrottle({ default: false })
   @UseInterceptors(
@@ -37,6 +39,7 @@ export class FileController {
       fileFilter: FileUtilsService.fileFilter
     })
   )
+
   @ApiResponse({ status: 200, description: "File uploaded successfully" })
   @ApiResponse({ status: 417, description: "Failed to upload file" })
   @ApiResponse({ status: 400, description: "Bad Request" })
@@ -72,8 +75,8 @@ export class FileController {
   }
 
   @Get()
+  @ApiTags("Files")
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiResponse({ status: 200, description: "Files fetching success" })
   @ApiResponse({ status: 417, description: "Failed to fetch files" })
   @ApiResponse({ status: 400, description: "Bad Request" })
@@ -105,8 +108,8 @@ export class FileController {
   }
 
   @Delete()
+  @ApiTags("Files")
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
   @ApiResponse({ status: 200, description: "File deleted successfully" })
   @ApiResponse({ status: 304, description: "Failed to delete file" })
   @ApiResponse({ status: 400, description: "Bad Request" })

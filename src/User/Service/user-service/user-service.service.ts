@@ -23,7 +23,7 @@ export class UserService {
                     name: dto.name.toString(),
                     email: dto.email.toLowerCase().toString(),
                     roles: dto.roles.map((role) => {
-                        if (!Object.values(Role).includes(role.toString())) {
+                        if (!Object.values(Role).includes(role)) {
                             throw new Error(`Invalid Role value`) // if invalid role is provided then stop user creation
                         }
                         return role.toString()
@@ -69,7 +69,7 @@ export class UserService {
         userObj.id = user.id
         userObj.name = user.name
         userObj.email = user.email
-        userObj.roles = user.roles
+        userObj.roles = user.roles // TODO convert to Role
         return userObj
 
     }
@@ -126,14 +126,14 @@ export class UserService {
     // google log in
 
     async createGmailUser(dto: UserDto): Promise<{access_token: string}> {
-        let existingUser = await this.findOneByEmail(dto.email)
+        let existingUser = await  this.findOneByEmail(dto.email)
         if (!existingUser) {
         const user = await this.prismaService.users.create({
             data: {
               name: dto.name.toString(),
               email: dto.email.toLowerCase().toString(),
               roles: dto.roles.map((role) => {
-                if (!Object.values(Role).includes(role.toString())) {
+                if (!Object.values(Role).includes(role)) {
                   throw new Error(`Invalid Role value`);
                 }
                 return role.toString();

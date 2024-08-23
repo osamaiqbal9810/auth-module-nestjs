@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
 import { PasswordDto } from 'src/User/DTO/PasswordDto';
@@ -9,12 +9,13 @@ import { GoogleOauthGuard } from './google-auth.guard';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { use } from 'passport';
+import { Role } from 'src/User/enums/Role.enum';
 // import { GoogleOauthGuard } from './google-auth.guard';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService, private userService: UserService) { }
-
+    @ApiTags("Auth")
     @ApiResponse({ status: 400, description: "Error: Bad Request" })
     @ApiResponse({ status: 404, description: "Login Failed. Not Found" })
     @ApiResponse({ status: 200, description: "Login Successful." })
@@ -44,6 +45,7 @@ export class AuthController {
         }
     }
 
+    @ApiTags("Auth")
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
     @ApiResponse({ status: 400, description: "Error: Bad Request" })
@@ -58,8 +60,7 @@ export class AuthController {
         }
     }
 
-
-
+    @ApiTags("Auth")
     @ApiResponse({ status: 200, description: "An email has been sent to you including password reset link, you can reset password using this link" })
     @ApiResponse({ status: 200, description: "User not found" })
     @ApiResponse({ status: 400, description: "Error: Bad Request" })
@@ -85,12 +86,14 @@ export class AuthController {
     }
 
     // Google Authentication
+    @ApiTags("Auth")
     @Get('google')
     @UseGuards(GoogleOauthGuard)
     async auth() {
         // initiate google login oage
     }
 
+    @ApiTags("Auth")
     @Get('google/callback')
     @UseGuards(GoogleOauthGuard)
     async googleAuthCallback(@Req() req, @Response() res) {
@@ -100,7 +103,7 @@ export class AuthController {
                 const userDto = new UserDto()
                 userDto.name = user.name
                 userDto.email = user.email
-                userDto.roles = ["Admin"]  // TODO
+                userDto.roles = [Role.User]  // TODO
                 userDto.subscriptionPlan = "Basic"  // TODO
                 const token = await this.authService.authGmailUser(userDto)
                 res.cookie('access_token', token.access_token, {
@@ -108,7 +111,6 @@ export class AuthController {
                     secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
                     sameSite: 'strict', // Helps prevent CSRF attacks
                 });
-                console.log(token)
                 return res.status(HttpStatus.OK).json({
                     access_token: token.access_token,
                     user: user

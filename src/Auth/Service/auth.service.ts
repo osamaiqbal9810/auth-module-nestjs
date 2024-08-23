@@ -20,7 +20,7 @@ export class AuthService {
         if (existingUser) {
              const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
              if (isMatch == true) {
-                 const payload = {_id: existingUser.id.toString()}
+                 const payload = { _id: existingUser.id.toString(), roles: existingUser.roles}
                return { access_token: await this.generateJWT(payload), user: existingUser }
              }
         }
