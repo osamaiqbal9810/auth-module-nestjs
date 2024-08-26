@@ -8,17 +8,10 @@ import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { RolesGuard } from '../roles.guard';
 import { Role } from '../enums/Role.enum';
 import { Roles } from 'src/roles.decorator';
+import { Success_Response_Schema, NOT_MODIFIED_SCHEMA, Record_NOT_FOUND_SCHEMA, FORBIDDEN_RESPONSE_OPTIONS } from 'src/ErrorResponse.utils';
 
-const FORBIDDEN_RESPONSE_OPTIONS: ApiResponseOptions = { status: 403, description: 'Forbidden: Permission not allowed', schema: {
-    type: 'object',
-    properties: {
-        message: {
-            type: 'string',
-            description: 'Forbidden: Permission not allowed',
-            example: 'Forbidden: Permission not allowed'
-        }
-    },
-} }
+
+
 
 @Controller('user')
 export class UserController {
@@ -27,39 +20,8 @@ export class UserController {
     // sign up
     @ApiTags("User")
     // @ApiBody({ type: UserDto })
-    @ApiResponse({
-        status: 200, description: 'The user has been created successfully.', schema: {
-            type: 'object',
-            properties: {
-                message: {
-                    type: 'string',
-                    description: 'User has been created successfully',
-                    example: 'User has been created successfully'
-                },
-                user: { $ref: getSchemaPath(UserDto) }
-            },
-        }
-    })
-    @ApiResponse({ status: 304, description: 'Bad Request Exception.', schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'Bad Request Exception.',
-                example: 'Bad Request Exception.'
-            }
-        }
-    } })
-    @ApiResponse({ status: 404, description: 'Cannot POST /user.', schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'Cannot POST /user.',
-                example: 'Cannot POST /user.'
-            }
-        }
-    } })
+    @ApiResponse(Success_Response_Schema("User has been created successfully.", getSchemaPath(UserDto)))
+    @ApiResponse(NOT_MODIFIED_SCHEMA("Failed to create user"))
     @Post()
     async createUser(@Response() res, @Body() dto: UserDto): Promise<{ message: String, user: User }> {
         try {
@@ -82,37 +44,9 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse({ status: 200, description: "User found", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User found',
-                example: 'User found'
-            },
-            user: { $ref: getSchemaPath(UserDto) }
-        },
-    } })
-    @ApiResponse({ status: 404, description: "User not found", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User not found',
-                example: '"User not found'
-            }
-        }
-    } })
-    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed', schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'Forbidden: Permission not allowed',
-                example: 'Forbidden: Permission not allowed'
-            }
-        }
-    } })
+    @ApiResponse(Success_Response_Schema("User Found", getSchemaPath(UserDto)))
+    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
+    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
@@ -124,27 +58,8 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse({ status: 200, description: "User found", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User found',
-                example: 'User found'
-            },
-            user: { $ref: getSchemaPath(UserDto) }
-        },
-    }  })
-    @ApiResponse({ status: 404, description: "User not found", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User not found',
-                example: 'User not found'
-            }
-        }
-    } })
+    @ApiResponse(Success_Response_Schema("User Found", getSchemaPath(UserDto)))
+    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
     @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
@@ -177,27 +92,8 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse({ status: 200, description: "User deleted successfully", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User deleted successfully',
-                example: 'User deleted successfully'
-            },
-            user: { $ref: getSchemaPath(UserDto) }
-        },
-    } })
-    @ApiResponse({ status: 404, description: "User not found", schema: {
-        type: 'object',
-        properties: {
-            message: {
-                type: 'string',
-                description: 'User not found',
-                example: 'User not found'
-            }
-        },
-    } })
+    @ApiResponse(Success_Response_Schema("User deleted Successfully", getSchemaPath(UserDto)))
+    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
     @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
     @Delete()
     @Roles(Role.Admin)
@@ -211,9 +107,9 @@ export class UserController {
     @ApiBearerAuth() //
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
-    @ApiResponse({ status: 200, description: "User deleted successfully" })
-    @ApiResponse({ status: 404, description: "User not found" })
-    @ApiResponse({ status: 403, description: 'Forbidden: Permission not allowed' })
+    @ApiResponse(Success_Response_Schema("User deleted Successfully", getSchemaPath(UserDto)))
+    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
+    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
   
@@ -243,9 +139,8 @@ export class UserController {
     }
 
     @ApiTags("User")
-    @ApiResponse({ status: 200, description: "Password updated successfully" })
-    @ApiResponse({ status: 404, description: "Password update failed. Reset token may got expired." })
-    @ApiResponse({ status: 400, description: "Error: Bad Request" })
+    @ApiResponse(Success_Response_Schema("Password updated successfully", getSchemaPath(UserDto)))
+    @ApiResponse(NOT_MODIFIED_SCHEMA("Password update failed. Reset token may got expired or User may not exist"))
     @Post("/reset-password")
     @ApiQuery({ name: 'reset-token', type: String })
     @ApiBody({ type: PasswordResetDto })
@@ -258,8 +153,8 @@ export class UserController {
                 })
 
             } else {
-                return response.status(HttpStatus.NOT_FOUND).json({
-                    message: "Password update failed. Reset token may got expired"
+                return response.status(HttpStatus.NOT_MODIFIED).json({
+                    message: "Password update failed. Reset token may got expired or User may not exist"
                 });
             }
         } catch (err) {
