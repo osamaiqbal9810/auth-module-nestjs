@@ -3,7 +3,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FILE_SIZE, FILEUPLOAD_DIR } from "../file-constnats";
+import { FILE_SIZE, FILE_UPLOAD_DIR } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
@@ -36,7 +36,7 @@ export class FileController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(process.cwd(), process.env.FILEUPLOAD_DIR ?? FILEUPLOAD_DIR),
+        destination: join(process.cwd(), process.env.FILE_UPLOAD_DIR ?? FILE_UPLOAD_DIR),
         filename: FileUtilsService.fileNameEditor
       }),
       limits: {
@@ -53,7 +53,7 @@ export class FileController {
       let fileDto = new FileDto()
       fileDto.fileName = file.filename
       fileDto.originalName = file.originalname
-      fileDto.path = `/${process.env.FILEUPLOAD_DIR}/${file.filename}`
+      fileDto.path = `/${process.env.FILE_UPLOAD_DIR}/${file.filename}`
       fileDto.fileSize = file.size
       const user = request['user'] as JWTPayloadModel
       if (user && user._id) {

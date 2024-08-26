@@ -46,7 +46,7 @@ export class FilesService {
             }
         })
         if (deletedFile) {
-            const filePath = `/${process.env.FILEUPLOAD_DIR}/${deletedFile.newFileName}`
+            const filePath = `/${process.env.FILE_UPLOAD_DIR}/${deletedFile.newFileName}`
             await fs.promises.unlink(filePath);
             return true
         }

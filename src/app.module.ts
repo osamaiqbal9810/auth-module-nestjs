@@ -8,7 +8,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
-import { FILEUPLOAD_DIR } from './Files/file-constnats';
+import { FILE_UPLOAD_DIR } from './Files/file-constnats';
 
 @Module({
   imports: [
@@ -22,8 +22,8 @@ import { FILEUPLOAD_DIR } from './Files/file-constnats';
       }
     }),
     ServeStaticModule.forRoot({
-      rootPath: path.join(process.cwd(), process.env.FILEUPLOAD_DIR ?? FILEUPLOAD_DIR),
-      serveRoot: `/${process.env.FILEUPLOAD_DIR}`, // URL path prefix for serving static files,
+      rootPath: path.join(process.cwd(), process.env.FILE_UPLOAD_DIR ?? FILE_UPLOAD_DIR),
+      serveRoot: `/${process.env.FILE_UPLOAD_DIR}`, // URL path prefix for serving static files,
       serveStaticOptions: {
         index: false
        },

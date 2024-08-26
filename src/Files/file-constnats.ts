@@ -5,4 +5,4 @@ export const STANDARD_PLAN_FILES_SIZE_LIMIT = 1000 * 1000 * 1000 // 1 GB
 export const PREMIUM_PLAN_FILES_SIZE_LIMIT = 1000 * 1000 * 10000 // 10 GB
 
 
-export const FILEUPLOAD_DIR = "uploads"
+export const FILE_UPLOAD_DIR = "uploads"
