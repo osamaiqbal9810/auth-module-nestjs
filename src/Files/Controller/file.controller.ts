@@ -1,9 +1,9 @@
-import { BadRequestException, Controller, Delete, Get, HttpStatus, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiBearerAuth, ApiNotModifiedResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FileDto } from "../DTO/FileDto";
+import { FileDto } from "../DTO/File.dto";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
 
@@ -11,14 +11,15 @@ import { FilesService } from "../Service/files.service";
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
-import { DeleteFileDto } from "../DTO/DeleteFileDto";
-import { RolesGuard } from "src/User/roles.guard";
-import { Roles } from "src/roles.decorator";
-import { Role } from "src/User/enums/Role.enum";
+import { DeleteFileDto } from "../DTO/DeleteFile.dto";
+import { createApiResponseSchema } from "src/ErrorResponse.utils";
+import { AuthGuard } from "src/Auth/auth.guard";
+import { error } from "console";
 
 
 
 @Controller('files')
+@UseGuards(AuthGuard)
 export class FileController {
   constructor(private readonly fileService: FilesService, private readonly userService: UserService) { }
   @ApiTags("Files")
@@ -40,10 +41,13 @@ export class FileController {
     })
   )
 
-  @ApiResponse({ status: 200, description: "File uploaded successfully" })
-  @ApiResponse({ status: 417, description: "Failed to upload file" })
-  @ApiResponse({ status: 400, description: "Bad Request" })
-  async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Request() request) {
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {
+    file: {
+      $ref: getSchemaPath(FileDto),
+    }
+  }))
+  @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to upload file"))
+  async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Request() request): Promise<{ message: string, fileInfo: FileDto }> {
     try {
       if (!file) {
         throw new Error('No file uploaded');
@@ -64,23 +68,24 @@ export class FileController {
           })
         }
         else {
-          return res.status(HttpStatus.EXPECTATION_FAILED).json({
-            message: res.message
-          })
+          throw new BadRequestException({ error: "Error" })
         }
       }
     } catch (err) {
-      throw new BadRequestException()
+      throw new InternalServerErrorException()
     }
   }
 
   @Get()
   @ApiTags("Files")
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: "Files fetching success" })
-  @ApiResponse({ status: 417, description: "Failed to fetch files" })
-  @ApiResponse({ status: 400, description: "Bad Request" })
-  async getUserFiles(@Req() request: Request, @Response() response) {
+  @ApiOkResponse(createApiResponseSchema(200, "Success","Files fetching success", {
+    file: {
+      $ref: getSchemaPath(FileDto),
+    }
+  }))
+   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to fetch files"))
+  async getUserFiles(@Req() request: Request, @Response() response): Promise<{ message: string, files: FileDto[] }> {
     try {
       const userId = request['user']?._id;
       if (userId) {
@@ -92,7 +97,7 @@ export class FileController {
           })
         }
         else {
-          return response.status(HttpStatus.EXPECTATION_FAILED).json({
+          return response.status(HttpStatus.BAD_REQUEST).json({
             message: response.message
           })
         }
@@ -103,16 +108,16 @@ export class FileController {
         })
       }
     } catch (err) {
-      throw new BadRequestException()
+      throw new InternalServerErrorException()
     }
   }
 
   @Delete()
   @ApiTags("Files")
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: "File deleted successfully" })
-  @ApiResponse({ status: 304, description: "Failed to delete file" })
-  @ApiResponse({ status: 400, description: "Bad Request" })
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "File deleted successfully."))
+  @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to delete file"))
+
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
   async delete(@Query('fileId') fileId: string, @Res() response) {
     try {
@@ -123,12 +128,12 @@ export class FileController {
         })
       }
       else {
-        return response.status(HttpStatus.NOT_MODIFIED).json({
+        return response.status(HttpStatus.BAD_REQUEST).json({
           message: response.message
         })
       }
     } catch (error) {
-      throw new BadRequestException()
+      throw new InternalServerErrorException()
     }
   }
 

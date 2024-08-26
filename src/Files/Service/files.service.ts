@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { FileDto } from "../DTO/FileDto";
+import { FileDto } from "../DTO/File.dto";
 import { PrismaService } from "src/prisma.service";
 import { planProperties, SubscriptionPlan } from "src/User/enums/SubscriptionPlan.enum";
 import { files } from "@prisma/client";
@@ -41,7 +41,7 @@ export class FilesService {
 
     async deleteFile(fileId: string): Promise<boolean> {
         const deletedFile = await this.prismaService.files.update({
-            where: {id: fileId},
+            where: {id: fileId, isRemoved: false},
             data: {
                 isRemoved: true
             }

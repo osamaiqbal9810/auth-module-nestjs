@@ -20,6 +20,8 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
     async canActivate(context: ExecutionContext): Promise<boolean> {
       const request = context.switchToHttp().getRequest();
       const token = this.extractTokenFromHeader(request);
+
+      console.log(token)
       if (!token) {
         throw new UnauthorizedException();
       }
@@ -38,7 +40,6 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
         if (!user || !user.isRemoved) {
           throw new UnauthorizedException()
         }
-        
         // 💡 We're assigning the payload to the request object here
         // so that we can access it in our route handlers
         request.user = payload; //TODO Do we need to attach complete user?

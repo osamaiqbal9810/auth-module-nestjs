@@ -1,27 +1,33 @@
-import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, HttpStatus, InternalServerErrorException, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
 import { PasswordDto } from 'src/User/DTO/PasswordDto';
 import { AuthGuard } from 'src/Auth/auth.guard';
-import { get } from 'http';
+
 import { GoogleOauthGuard } from './google-auth.guard';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { use } from 'passport';
 import { Role } from 'src/User/enums/Role.enum';
-// import { GoogleOauthGuard } from './google-auth.guard';
+import { createApiResponseSchema } from 'src/ErrorResponse.utils';
+import { User } from 'src/User/Schema/user.schema';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService, private userService: UserService) { }
     @ApiTags("Auth")
-    @ApiResponse({ status: 400, description: "Error: Bad Request" })
-    @ApiResponse({ status: 404, description: "Login Failed. Not Found" })
-    @ApiResponse({ status: 200, description: "Login Successful." })
+    @ApiOkResponse(createApiResponseSchema(200, "Success","Logged in successfully!", {access_token: {
+        type: 'string',
+        example: "ey7yrgbu7yr4ir982y2i9yr92u90399"
+    }, user: {
+        $ref: getSchemaPath(UserDto),
+    }}))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "Login Failed! user not found"))
     @ApiBody({ type: SignInDto })
     @Post("/signIn")
-    async signIn(@Response() res, @Body() signInDto: SignInDto): Promise<any> {
+    async signIn(@Response() res, @Body() signInDto: SignInDto): Promise<{message: string, access_token: string, user: User}> {
+        
         try {
             const result = await this.authService.signIn(signInDto)
             if (result && result) {
@@ -32,7 +38,8 @@ export class AuthController {
                 });
                 return res.status(HttpStatus.OK).json({
                     message: "Logged in successfully!",
-                    result
+                    access_token: result.access_token,
+                    user: result.user
                 })
             }
             else {
@@ -41,29 +48,27 @@ export class AuthController {
                 })
             }
         } catch (error) {
-            throw new BadRequestException()
+            throw new InternalServerErrorException()
         }
     }
 
     @ApiTags("Auth")
     @ApiBearerAuth()
     @UseGuards(AuthGuard)
-    @ApiResponse({ status: 400, description: "Error: Bad Request" })
-    @ApiResponse({ status: 200, description: "Logout success." })
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "Logout success."))
     @Get('signOut')
     async signOut(@Response() res): Promise<void> {
         try {
             res.clearCookie('jwt')
-            res.status(200).json({ message: 'Signed out successfully' });
+            return res.status(200).json({ message: 'Signed out successfully' });
         } catch (err) {
-            throw new BadRequestException()
+            throw new InternalServerErrorException()
         }
     }
 
     @ApiTags("Auth")
-    @ApiResponse({ status: 200, description: "An email has been sent to you including password reset link, you can reset password using this link" })
-    @ApiResponse({ status: 200, description: "User not found" })
-    @ApiResponse({ status: 400, description: "Error: Bad Request" })
+    @ApiOkResponse(createApiResponseSchema(200, "Success","An email has been sent to you including password reset link, you can reset password using this link"))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User doesn't exist"))
     @Post("/forgotPassword")
     @ApiBody({ type: PasswordDto })
     async generatePasswordResetToken(@Request() req, @Response() res, @Body() passwordDto: PasswordDto): Promise<any> {
@@ -76,12 +81,12 @@ export class AuthController {
                 })
             } else {
                 return res.status(HttpStatus.NOT_FOUND).json({
-                    message: "User not found"
+                    message: "User doesn't exist"
                 })
             }
 
         } catch (error) {
-            throw new BadRequestException()
+            throw new InternalServerErrorException()
         }
     }
 
@@ -95,16 +100,18 @@ export class AuthController {
 
     @ApiTags("Auth")
     @Get('google/callback')
+    @ApiOkResponse(createApiResponseSchema(200, "Success","Logged in successfully"))
+    @ApiNotFoundResponse(createApiResponseSchema(404,"Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req, @Response() res) {
+    async googleAuthCallback(@Req() req, @Response() res): Promise<{acces_token: string, user: User}> {
         try {
             let user = req['user']
             if (user) {
                 const userDto = new UserDto()
                 userDto.name = user.name
                 userDto.email = user.email
-                userDto.roles = [Role.User]  // TODO
-                userDto.subscriptionPlan = "Basic"  // TODO
+                userDto.roles = [Role.User]  
+                
                 const token = await this.authService.authGmailUser(userDto)
                 res.cookie('access_token', token.access_token, {
                     httpOnly: true,
@@ -112,15 +119,16 @@ export class AuthController {
                     sameSite: 'strict', // Helps prevent CSRF attacks
                 });
                 return res.status(HttpStatus.OK).json({
+                    message: "Logged in successfully",
                     access_token: token.access_token,
                     user: user
                 });
             }
-            return res.status(HttpStatus.FAILED_DEPENDENCY).json({
+            return res.status(HttpStatus.NOT_FOUND).json({
                 message: "User not found"
             })
         } catch (error) {
-            throw new BadRequestException()
+            throw new InternalServerErrorException()
         }
     }
 

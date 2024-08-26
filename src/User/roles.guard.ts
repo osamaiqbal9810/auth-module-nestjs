@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role, } from './enums/Role.enum';
 import { Request } from 'express';

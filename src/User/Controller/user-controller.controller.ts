@@ -1,14 +1,14 @@
 import { Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Query, Response, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiNotFoundResponse, ApiNotModifiedResponse, ApiOkResponse, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { RolesGuard } from '../roles.guard';
 import { Role } from '../enums/Role.enum';
 import { Roles } from 'src/roles.decorator';
-import { Success_Response_Schema, NOT_MODIFIED_SCHEMA, Record_NOT_FOUND_SCHEMA, FORBIDDEN_RESPONSE_OPTIONS } from 'src/ErrorResponse.utils';
+import {  createApiResponseSchema } from 'src/ErrorResponse.utils';
 
 
 
@@ -16,12 +16,15 @@ import { Success_Response_Schema, NOT_MODIFIED_SCHEMA, Record_NOT_FOUND_SCHEMA, 
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) { }
-
     // sign up
     @ApiTags("User")
-    // @ApiBody({ type: UserDto })
-    @ApiResponse(Success_Response_Schema("User has been created successfully.", getSchemaPath(UserDto)))
-    @ApiResponse(NOT_MODIFIED_SCHEMA("Failed to create user"))
+    //@ApiBody({ type: UserDto })
+    @ApiOkResponse(createApiResponseSchema(200, "Success","User has been created successfully.",{
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to create user"))
     @Post()
     async createUser(@Response() res, @Body() dto: UserDto): Promise<{ message: String, user: User }> {
         try {
@@ -32,7 +35,7 @@ export class UserController {
                     user
                 });
             }
-            return res.status(HttpStatus.NOT_MODIFIED).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Failed to create user',
             });
         } catch (error) {
@@ -44,9 +47,13 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse(Success_Response_Schema("User Found", getSchemaPath(UserDto)))
-    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
-    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
+    @ApiOkResponse(createApiResponseSchema(200, "Success","User Found", {
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
+    @ApiForbiddenResponse(createApiResponseSchema(403, "Forbidden", "Permission not allowed"))
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
@@ -58,9 +65,13 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse(Success_Response_Schema("User Found", getSchemaPath(UserDto)))
-    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
-    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
+    @ApiOkResponse(createApiResponseSchema(200,"Success", "User found", {
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found","User not found"))
+    @ApiForbiddenResponse(createApiResponseSchema(403, "Forbidden", "Permission not allowed"))
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
     @Roles(Role.Admin)
@@ -92,9 +103,13 @@ export class UserController {
     @ApiTags("User")
     @UseGuards(RolesGuard)
     @ApiBearerAuth()
-    @ApiResponse(Success_Response_Schema("User deleted Successfully", getSchemaPath(UserDto)))
-    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
-    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
+    @ApiOkResponse(createApiResponseSchema(200, "Success","User deleted Successfully", {
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
+    @ApiForbiddenResponse(createApiResponseSchema(403, "Forbidden", "Permission not allowed"))
     @Delete()
     @Roles(Role.Admin)
 
@@ -107,9 +122,13 @@ export class UserController {
     @ApiBearerAuth() //
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
-    @ApiResponse(Success_Response_Schema("User deleted Successfully", getSchemaPath(UserDto)))
-    @ApiResponse(Record_NOT_FOUND_SCHEMA("User not found"))
-    @ApiResponse(FORBIDDEN_RESPONSE_OPTIONS)
+    @ApiOkResponse(createApiResponseSchema(200, "Successs","User deleted Successfully", {
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
+    @ApiForbiddenResponse(createApiResponseSchema(403, "Forbidden", "Permission not allowed"))
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
   
@@ -139,8 +158,12 @@ export class UserController {
     }
 
     @ApiTags("User")
-    @ApiResponse(Success_Response_Schema("Password updated successfully", getSchemaPath(UserDto)))
-    @ApiResponse(NOT_MODIFIED_SCHEMA("Password update failed. Reset token may got expired or User may not exist"))
+    @ApiOkResponse(createApiResponseSchema(200, "Success","Password updated successfully", {
+        user: {
+          $ref: getSchemaPath(UserDto),
+        }
+      }))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Password update failed. Reset token may got expired or User may not exist"))
     @Post("/reset-password")
     @ApiQuery({ name: 'reset-token', type: String })
     @ApiBody({ type: PasswordResetDto })
@@ -153,7 +176,7 @@ export class UserController {
                 })
 
             } else {
-                return response.status(HttpStatus.NOT_MODIFIED).json({
+                return response.status(HttpStatus.BAD_REQUEST).json({
                     message: "Password update failed. Reset token may got expired or User may not exist"
                 });
             }

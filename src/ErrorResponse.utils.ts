@@ -1,58 +1,36 @@
-import { ApiResponseOptions, getSchemaPath } from "@nestjs/swagger";
-import { UserDto } from "./User/DTO/user.dto";
+import { ApiResponseOptions } from "@nestjs/swagger";
+import { ReferenceObject, SchemaObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 
-export const FORBIDDEN_RESPONSE_OPTIONS: ApiResponseOptions = { status: 403, description: 'Forbidden: Permission not allowed', schema: {
-    type: 'object',
-    properties: {
-        message: {
-            type: 'string',
-            description: 'Forbidden: Permission not allowed',
-            example: 'Forbidden: Permission not allowed'
-        }
-    },
-} }
-
-
-export const Success_Response_Schema = (message: string, model: string) => ({
-    status: 200,
-    description: message,
+export const createApiResponseSchema = (
+    statusCode: number,
+    statusMessage: string,
+    message: string | string[],
+    additionalProps: Record<string, SchemaObject | ReferenceObject> = {},
+): ApiResponseOptions => ({
+    status: statusCode,
+    description: statusMessage,
     schema: {
         type: 'object',
         properties: {
-            message: {
-                type: 'string',
-                description: message,
-                example: message,
+            message: Array.isArray(message)
+                ? {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'List of messages',
+                    example: message,
+                }
+                : {
+                    type: 'string',
+                    description: message,
+                    example: message,
+                },
+            statusCode: {
+                type: 'number',
+                description: statusCode.toString(),
+                example: statusCode,
             },
-            user: { 
-                $ref: model,
-            },
+            ...additionalProps,
         },
     },
 });
 
-export const NOT_MODIFIED_SCHEMA = (message: string) => ({
-    status: 304, description: message, schema: {
-    type: 'object',
-        properties: {
-        message: {
-            type: 'string',
-            description: message,
-            example: message
-        }
-    }
-    } 
-})
-
-export const Record_NOT_FOUND_SCHEMA = (message: string) => ({
-    status: 404, description: message, schema: {
-    type: 'object',
-        properties: {
-        message: {
-            type: 'string',
-            description: message,
-            example: message
-        }
-    }
-    } 
-})

@@ -6,7 +6,7 @@ import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PrismaService } from "src/prisma.service";
-import { GoogleStrategy } from "src/Strategies/google.strategy";
+import { GoogleStrategy } from "src/Auth/Strategies/google.strategy";
 import { UserService } from "src/User/Service/user-service/user-service.service";
 
 

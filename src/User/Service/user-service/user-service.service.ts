@@ -15,7 +15,7 @@ export class UserService {
     constructor(private prismaService: PrismaService,  @Inject(forwardRef(() => AuthService)) private authService: AuthService) { }
 
     async createUser(dto: UserDto): Promise<User> {
-      //  await validateOrReject(dto);
+       // await validateOrReject(dto);
        
         const result = await this.prismaService.$transaction(async (prisma) => {
             const user = await prisma.users.create({
@@ -28,13 +28,7 @@ export class UserService {
                         }
                         return role.toString()
                     }),
-                    subscriptionPlan: (() => {
-                        const plan = dto.subscriptionPlan.toString();
-                        if (Object.values(SubscriptionPlan).includes(plan)) {
-                            return dto.subscriptionPlan.valueOf()
-                        }
-                        throw new Error(`Invalid Subscription plan value`) // if invalid role is provided then stop user creation
-                    })()
+                    subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic]
                 },
             });
             let salt = await bcrypt.genSalt()
@@ -141,7 +135,7 @@ export class UserService {
               subscriptionPlan: (() => {
                 const plan = dto.subscriptionPlan.toString();
                 if (Object.values(SubscriptionPlan).includes(plan)) {
-                  return dto.subscriptionPlan.valueOf();
+                  return SubscriptionPlan[dto.subscriptionPlan];
                 }
                 throw new Error(`Invalid Subscription plan value`);
               })(),
