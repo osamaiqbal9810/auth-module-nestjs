@@ -9,9 +9,9 @@ import { User } from 'src/User/Schema/user.schema';
 import { PrismaService } from 'src/prisma.service';
 @Injectable()
 export class AuthService {
-    constructor(private prismaService: PrismaService,   @Inject(forwardRef(() => UserService)) private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
+    constructor(private prismaService: PrismaService, @Inject(forwardRef(() => UserService)) private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
 
-    async signIn(signInDto: SignInDto): Promise<{access_token: string, user: User}> {
+    async signIn(signInDto: SignInDto): Promise<{access_token: String, user: User}> {
         const existingUser = await this.prismaService.users.findFirst({
             where: {email: signInDto.email.toLowerCase()},
             include: {password: true}
@@ -27,7 +27,7 @@ export class AuthService {
        return null
     }
 
-    async generatePasswordResetToken(email: string, serverUrl: string): Promise<boolean> {
+    async generatePasswordResetToken(email: String, serverUrl: String): Promise<boolean> {
         const user = await this.userService.findOneByEmail(email);
         if (user) {
             const token = uuidv4(); // Generate a unique token
@@ -39,7 +39,7 @@ export class AuthService {
         return false
       }
 
-      async sendForgotPasswordEmail(user: User, token: string, expirationDate: Date, serverUrl: string): Promise<boolean> {
+      async sendForgotPasswordEmail(user: User, token: String, expirationDate: Date, serverUrl: String): Promise<boolean> {
        const resetUrl = `${serverUrl}/reset-password?token=${token}`;
        // save token and token expiry in db to validate at time when user provide new password
         let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate) 
@@ -79,7 +79,7 @@ export class AuthService {
       return  await this.jwtService.signAsync(payload)
     }
 
-    async authGmailUser(userDto): Promise<{access_token: string}> {
+    async authGmailUser(userDto): Promise<{access_token: String}> {
      return await this.userService.createGmailUser(userDto)
     }
 }

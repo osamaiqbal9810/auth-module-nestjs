@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Query, Response, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, NotFoundException, Param, Post, Query, Response, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiNotModifiedResponse, ApiOkResponse, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
@@ -27,19 +27,22 @@ export class UserController {
       }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to create user"))
     @Post()
-    async createUser(@Response() res, @Body() dto: UserDto): Promise<{ message: String, user: User }> {
+    async createUser(@Body() dto: UserDto): Promise<{ statusCode: Number, message: String, user: User }> {
         try {
             const user = await this.userService.createUser(dto)
             if (user) {
-                return res.status(HttpStatus.OK).json({
+                return {
+                    statusCode: 200,
                     message: 'User has been created successfully',
                     user
-                });
+                };
             }
-            return res.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Failed to create user',
-            });
+            throw new BadRequestException("Failed to create user")
+     
         } catch (error) {
+            if (error instanceof BadRequestException) {
+                throw error
+            }
             throw new InternalServerErrorException()
         }
     }
@@ -58,7 +61,7 @@ export class UserController {
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
-    async findOne(@Response() response, @Query('email') email: string): Promise<{message: string, user: User}> {
+    async findOne(@Response() response, @Query('email') email: String): Promise<{message: String, user: User}> {
         return this.findUser(response, () => this.userService.findOneByEmail(email), email);
     }
 
@@ -76,26 +79,26 @@ export class UserController {
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
     @Roles(Role.Admin)
-    async findOneById(@Response() response, @Param('id') id: string): Promise<{message: string, user: User}> {
+    async findOneById(@Response() response, @Param('id') id: String): Promise<{message: String, user: User}> {
         return this.findUser(response, () => this.userService.findOneById(id), id);
     }
 
     // Common method to handle both by email and by ID
-    private async findUser(response, user: () => Promise<User>, identifier: string): Promise<{message: string, user: User}> {
+    private async findUser(response, user: () => Promise<User>, identifier: String): Promise<{statusCode: Number, message: String, user: User}> {
         try {
             const existingUser = await user();
             if (existingUser) {
-                return response.status(HttpStatus.OK).json({
+                return {
+                    statusCode: 200,
                     message: "User found!",
                     user: existingUser,
-                });
-            } else {
-                return response.status(HttpStatus.NOT_FOUND).json({
-                    statusCode: HttpStatus.NOT_FOUND,
-                    message: `User with identifier ${identifier} doesn't exist!`,
-                });
-            }
+                };
+            } 
+            throw new NotFoundException(`User with identifier ${identifier} doesn't exist!`)    
         } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error
+            }
             throw new InternalServerErrorException()
         }
     }
@@ -107,7 +110,7 @@ export class UserController {
     @ApiOkResponse(createApiResponseSchema(200, "Success","User deleted Successfully", {
         userId: {
             type: 'string',
-            example: "049023849029329323"
+            example: "0fe4902384902932932b36"
         }
       }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
@@ -115,7 +118,7 @@ export class UserController {
     @Delete()
     @Roles(Role.Admin)
 
-    async delete(@Response() response, @Query('email') email: string): Promise<{messsage: string, userdId: string}> {
+    async delete(@Response() response, @Query('email') email: string): Promise<{statusCode: Number, message: String, userId: String}> {
         return await this.deleteUser(response, () => this.userService.deleteUser(email))
     }
 
@@ -135,27 +138,25 @@ export class UserController {
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
   
-    async deleteUserById(@Response() response, @Param('id') id: string): Promise<{messsage: string, userdId: string}> {
+    async deleteUserById(@Response() response, @Param('id') id: string): Promise<{statusCode: Number, message: String, userId: String}> {
         return await this.deleteUser( response, () => this.userService.deleteUserById(id) )    
     }
 
-    async deleteUser(@Response() response, user: () => Promise<User>): Promise<{messsage: string, userdId: string}> {
+    async deleteUser(@Response() response, user: () => Promise<User>): Promise<{ statusCode: Number, message: String, userId: String}> {
         try {
             let deletedUser = await user();
             if (deletedUser) {
-                return response.status(HttpStatus.OK).json({
+                return {
+                    statusCode: 200,
                     message: "User deleted successfully",
                     userId: deletedUser.id
-                })
-            } else {
-                return response.status(HttpStatus.NOT_FOUND).json({
-                    statusCode: response.statusCode,
-                    message: response.message,
-                    error: 'User not found'
-                });
+                }
             }
+            throw new NotFoundException("User not found")
         } catch (err) {
-            console.log(err)
+            if (err instanceof NotFoundException) {
+                throw err
+            }
             throw new InternalServerErrorException()
         }
     }
@@ -170,20 +171,21 @@ export class UserController {
     @Post("/reset-password")
     @ApiQuery({ name: 'reset-token', type: String })
     @ApiBody({ type: PasswordResetDto })
-    async resetPassword(@Response() response, @Query("reset-token") token: string, @Body() resetDto: PasswordResetDto) {
+    async resetPassword(@Query("reset-token") token: String, @Body() resetDto: PasswordResetDto): Promise<{statusCode: Number, message: String}> {
         try {
             let result = await this.userService.resetPassword(token, resetDto)
             if (result) {
-                return response.status(HttpStatus.OK).json({
+                return {
+                    statusCode: 200,
                     message: "Password updated successfully."
-                })
-
-            } else {
-                return response.status(HttpStatus.BAD_REQUEST).json({
-                    message: "Password update failed. Reset token may got expired or User may not exist"
-                });
-            }
+                }
+            } 
+            throw new BadRequestException("Password update failed. Reset token may got expired or User may not exist")
+            
         } catch (err) {
+            if (err instanceof BadRequestException) {
+                throw err
+            }
             throw new InternalServerErrorException()
         }
     }

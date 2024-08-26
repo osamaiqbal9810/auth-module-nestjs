@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
-import { validateOrReject } from 'class-validator'
+import { useContainer, validateOrReject } from 'class-validator'
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { Role } from 'src/User/enums/Role.enum';
@@ -78,7 +78,7 @@ export class UserService {
         })
     }
 
-    async resetPassword(token: string, passwordDto: PasswordResetDto): Promise<boolean> {
+    async resetPassword(token: String, passwordDto: PasswordResetDto): Promise<boolean> {
         const user = await this.getUserByEmailAndResetToken(passwordDto.email.toLowerCase(), token)
         if (!user) {
             return false
@@ -92,9 +92,9 @@ export class UserService {
         return updatedPassword ? true : false
     }
 
-    async getUserByEmailAndResetToken(email: string, token: string): Promise<User> {
+    async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
         let userObj = await this.prismaService.userspasswords.findFirst({
-            where: { resetToken: token, user: { email: email } },
+            where: { resetToken: token.valueOf(), user: { email: email.valueOf() } },
             include: { user: true },
         });
 
@@ -104,10 +104,10 @@ export class UserService {
         return null
     }
 
-    async saveResetTokenAndExpiry(userId: string, token: string, tokenExpiryDate: Date): Promise<boolean> {
+    async saveResetTokenAndExpiry(userId: String, token: String, tokenExpiryDate: Date): Promise<boolean> {
         let result = await this.prismaService.userspasswords.update({
-            where: { userId: userId },
-            data: { resetToken: token, tokenExpiryDate: tokenExpiryDate }
+            where: { userId: userId.valueOf() },
+            data: { resetToken: token.valueOf(), tokenExpiryDate: tokenExpiryDate }
         })
         return result ? true : false
     }
@@ -115,7 +115,7 @@ export class UserService {
 
     // google log in
 
-    async createGmailUser(dto: UserDto): Promise<{access_token: string}> {
+    async createGmailUser(dto: UserDto): Promise<{access_token: String}> {
         let existingUser = await  this.findOneByEmail(dto.email)
         if (!existingUser) {
         const user = await this.prismaService.users.create({

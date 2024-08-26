@@ -22,9 +22,9 @@ export class FilesService {
         });
     }
 
-    async getAllFilesForUser(id: string): Promise<FileDto[]> {
+    async getAllFilesForUser(id: String): Promise<FileDto[]> {
     const files = await this.prismaService.files.findMany({
-            where: {userId: id, isRemoved: false}
+            where: {userId: id.valueOf(), isRemoved: false}
         })
 
         return  files.map((file)=> {
@@ -39,9 +39,9 @@ export class FilesService {
         })
     }
 
-    async deleteFile(fileId: string): Promise<boolean> {
+    async deleteFile(fileId: String): Promise<boolean> {
         const deletedFile = await this.prismaService.files.update({
-            where: {id: fileId, isRemoved: false},
+            where: {id: fileId.valueOf(), isRemoved: false},
             data: {
                 isRemoved: true
             }

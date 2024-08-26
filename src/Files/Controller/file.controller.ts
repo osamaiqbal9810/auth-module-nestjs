@@ -1,12 +1,10 @@
-import { BadRequestException, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Controller, Delete, Get, HttpStatus, InternalServerErrorException, NotFoundException, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiNotModifiedResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
-
-
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
@@ -47,9 +45,7 @@ export class FileController {
       fileFilter: FileUtilsService.fileFilter
     })
   )
-
-
-  async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Request() request): Promise<{ message: string, fileInfo: FileDto }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request): Promise<{ statusCode: Number, message: String, fileInfo: FileDto }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
@@ -64,17 +60,21 @@ export class FileController {
         fileDto.userId = userId;
         const isUploaded = this.fileService.saveUploadedFileInfo(fileDto)
         if (isUploaded) {
-          return res.status(HttpStatus.OK).json({
+          return {
+            statusCode: 200,
             message: "File Uploaded Successfully",
             fileInfo: fileDto
-          })
+          }
         }
-        else {
-          throw new BadRequestException({ error: "Error" })
-        }
+      throw new BadRequestException("Error uploading file")
       }
+
+      throw new NotFoundException("User doesn't exist in request")
     } catch (err) {
-      throw new InternalServerErrorException('An error occurred while uploading the file')
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err
+      }
+      throw new InternalServerErrorException()
     }
   }
 
@@ -88,29 +88,25 @@ export class FileController {
     }
   }))
    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to fetch files"))
-  async getUserFiles(@Req() request: Request, @Response() response): Promise<{ message: string, files: FileDto[] }> {
+  async getUserFiles(@Req() request: Request, @Response() response): Promise<{statusCode: Number, message: String, files: FileDto[] }> {
     try {
       const userId = request['user']?._id;
       if (userId) {
         const files = await this.fileService.getAllFilesForUser(userId);
         if (files) {
-          return response.status(HttpStatus.OK).json({
+          return {
+            statusCode: 200,
             message: "Files fetching success",
             files
-          })
+          }
         }
-        else {
-          return response.status(HttpStatus.BAD_REQUEST).json({
-            message: response.message
-          })
-        }
+        throw new BadRequestException("Failed to fetch files")
       }
-      else {
-        return response.status(HttpStatus.NOT_FOUND).json({
-          message: response.message
-        })
-      }
+      throw new NotFoundException("User doesn't exist in request")
     } catch (err) {
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err
+      }
       throw new InternalServerErrorException()
     }
   }
@@ -118,24 +114,30 @@ export class FileController {
   @Delete()
   @ApiTags("Files")
   @ApiBearerAuth()
-  @ApiOkResponse(createApiResponseSchema(200, "Success", "File deleted successfully."))
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "File deleted successfully.", {
+    fileId: {
+      type: 'string',
+      example: '8d9384398743749347397b'
+    }
+  }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to delete file"))
 
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
-  async delete(@Query('fileId') fileId: string, @Res() response) {
+  async delete(@Query('fileId') fileId: String): Promise<{statusCode: Number, message: String, fileId: String }> {
     try {
       const isDeleted = await this.fileService.deleteFile(fileId)
       if (isDeleted) {
-        return response.status(HttpStatus.OK).json({
-          message: "File deleted successfully"
-        })
+        return {
+          statusCode: 200,
+          message: "File deleted successfully.",
+          fileId: fileId
+        }
       }
-      else {
-        return response.status(HttpStatus.BAD_REQUEST).json({
-          message: response.message
-        })
-      }
+      throw new BadRequestException("Failed to delete file")
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error
+      }
       throw new InternalServerErrorException()
     }
   }
