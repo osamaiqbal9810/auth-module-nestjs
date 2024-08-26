@@ -41,25 +41,26 @@ export class UserService {
     }
 
 
-    async findOneByEmail(email: String): Promise<User> {
+    async findOneByEmail(email: String): Promise<User | null> {
         return this.find(async () => await this.prismaService.users.findFirst({ where: { email: email.toString(), isRemoved: false } }))
     }
 
-    async findOneById(id: String): Promise<User> {
+    async findOneById(id: String): Promise<User | null> {
         return this.find(async () => await this.prismaService.users.findFirst({ where: { id: id.toString(), isRemoved: false } }))
     }
 
-    async find(userRecord: () => Promise<User>): Promise<User> {
+    async find(userRecord: () => Promise<User | null>): Promise<User | null> {
         const user = await userRecord()
         if (!user) {
             return null
         }
-        let userObj = new User()
-        userObj.id = user.id
-        userObj.name = user.name
-        userObj.email = user.email
-        userObj.roles = user.roles // TODO convert to Role
-        userObj.isRemoved = user.isRemoved
+        let userObj = new User(
+            user.id,
+            user.name,
+            user.email,
+            user.roles,  // Ensure roles is in the correct format if conversion is needed
+            user.isRemoved
+        );
         return userObj
 
     }
@@ -92,7 +93,7 @@ export class UserService {
         return updatedPassword ? true : false
     }
 
-    async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
+    async getUserByEmailAndResetToken(email: String, token: String): Promise<User | null> {
         let userObj = await this.prismaService.userspasswords.findFirst({
             where: { resetToken: token.valueOf(), user: { email: email.valueOf() } },
             include: { user: true },

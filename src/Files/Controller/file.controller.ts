@@ -3,7 +3,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FILE_SIZE } from "../file-constnats";
+import { FILE_SIZE, FILEUPLOAD_DIR } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
@@ -36,7 +36,7 @@ export class FileController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(process.cwd(), process.env.FILEUPLOAD_DIR),
+        destination: join(process.cwd(), process.env.FILEUPLOAD_DIR ?? FILEUPLOAD_DIR),
         filename: FileUtilsService.fileNameEditor
       }),
       limits: {
@@ -58,7 +58,7 @@ export class FileController {
       const user = request['user'] as JWTPayloadModel
       if (user && user._id) {
         fileDto.userId = user._id.valueOf();
-        const isUploaded = this.fileService.saveUploadedFileInfo(fileDto)
+        const isUploaded = await this.fileService.saveUploadedFileInfo(fileDto)
         if (isUploaded) {
           return {
             statusCode: 200,

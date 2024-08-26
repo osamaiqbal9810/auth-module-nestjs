@@ -31,14 +31,12 @@ export class RolesGuard implements CanActivate {
             return true
 
         } catch (err) {
-           if (err instanceof HttpException) {
-            if (err.getStatus() == 403) {
-                throw new ForbiddenException()
+            if (err instanceof HttpException) {
+                if (err.getStatus() == 403) {
+                    throw new ForbiddenException()
+                }
             }
-           }
-           else {
             throw new InternalServerErrorException();
-           }
         }
     }
 }

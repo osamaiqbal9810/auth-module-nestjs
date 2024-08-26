@@ -6,6 +6,9 @@ export class PasswordDto {
     @ApiProperty()
     @IsNotEmpty()
     email: string
-    
+   
+    constructor(email: string) {
+      this.email = email
+    }
   }
   

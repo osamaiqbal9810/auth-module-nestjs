@@ -6,4 +6,8 @@ export class DeleteFileDto {
     @IsNotEmptyObject()
     @ApiProperty()
     fileId: string
+
+    constructor(fileId: string) {
+        this.fileId = fileId
+    }
 }

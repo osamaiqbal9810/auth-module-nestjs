@@ -14,13 +14,13 @@ import { JWTPayloadModel } from 'src/Payload.model';
 export class AuthService {
     constructor(private prismaService: PrismaService, @Inject(forwardRef(() => UserService)) private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
 
-    async signIn(signInDto: SignInDto): Promise<{access_token: String, user: User}> {
+    async signIn(signInDto: SignInDto): Promise<{access_token: String, user: User} | null> {
         const existingUser = await this.prismaService.users.findFirst({
             where: {email: signInDto.email.toLowerCase()},
             include: {password: true}
         })
         
-        if (existingUser) {
+        if (existingUser && existingUser.password) {
              const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
              if (isMatch == true) {
                  const payload = { _id: existingUser.id.toString(), roles: existingUser.roles}

@@ -26,13 +26,14 @@ export class FilesService {
         })
 
         return  files.map((file)=> {
-            const dto = new FileDto()
-            dto.id = file.id
-            dto.originalName = file.originalFileName
-            dto.fileName = file.newFileName
-            dto.path = file.filePath
-            dto.fileSize = Number(file.fileSize)
-            dto.userId = file.userId
+            const dto = new FileDto(
+                file.id,
+                file.originalFileName,
+                file.newFileName,
+                file.filePath,
+                file.userId,
+                Number(file.fileSize),
+            )
             return dto
         })
     }

@@ -16,4 +16,16 @@ export class UsersPassword {
 
     @IsDate()
     tokenExpiryDate: Date
+
+    constructor(
+        userId: string,
+        hashedPassword: string,
+        resetToken: string,
+        tokenExpiryDate: Date
+      ) {
+        this.userId = userId;
+        this.hashedPassword = hashedPassword;
+        this.resetToken = resetToken;
+        this.tokenExpiryDate = tokenExpiryDate;
+      }
 }

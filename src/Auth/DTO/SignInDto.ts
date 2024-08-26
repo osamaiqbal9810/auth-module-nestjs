@@ -11,6 +11,11 @@ export class SignInDto {
     @ApiProperty()
     @IsString()
     password: string
+
+    constructor(email: string, password: string) {
+        this.email = email;
+        this.password = password;
+      }
 }
 
 export class PasswordResetDto {
@@ -23,4 +28,9 @@ export class PasswordResetDto {
     @IsString()
     @IsStrongPassword()
     newPassword: string
+
+    constructor(email: string, newPassword: string) {
+        this.email = email;
+        this.newPassword = newPassword;
+      }
 }

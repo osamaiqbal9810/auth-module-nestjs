@@ -84,7 +84,7 @@ export class UserController {
     }
 
     // Common method to handle both by email and by ID
-    private async findUser( user: () => Promise<User>, identifier: String): Promise<{statusCode: Number, message: String, user: User}> {
+    private async findUser( user: () => Promise<User | null>, identifier: String): Promise<{statusCode: Number, message: String, user: User}> {
         try {
             const existingUser = await user();
             if (existingUser) {

@@ -23,9 +23,24 @@ export class User {
     @IsArray()
     @IsNotEmpty()
     roles: String[]
+    
 
     @IsBoolean()
     isRemoved: Boolean = false
-}
 
-export class CreatedUserDto extends User {}
+    constructor(
+        id: String,
+        name: String,
+        email: String,
+        roles: String[],
+        isRemoved?: Boolean
+      ) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.roles = roles;
+        if (isRemoved !== undefined) {
+          this.isRemoved = isRemoved;
+        }
+      }
+}

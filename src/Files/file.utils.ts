@@ -15,7 +15,7 @@ export class FileUtilsService {
   static fileNameEditor = (
     _req: Request,
     file: Express.Multer.File,
-    callback: (error: Error, filename: string) => void
+    callback: (error: Error | null, filename: string) => void
   ) => {
     try {
       // Extract the file extension from the original filename
@@ -31,7 +31,7 @@ export class FileUtilsService {
   static fileFilter = async (
     req: Request,
     file: Express.Multer.File,
-    callback: (error: Error, valid: boolean) => void,
+    callback: (error: Error | null, valid: boolean) => void,
   ) => {
     try {
       const fileExt = extname(file.originalname)

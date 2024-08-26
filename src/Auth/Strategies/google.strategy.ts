@@ -19,6 +19,8 @@ export interface GoogleProfileTranslated {
     email: string
     name: string
     picture: string
+    accessToken: string
+    refreshToken: string
   }
 
 
@@ -40,7 +42,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             providerId: id,
             email: emails[0].value,
             name: `${name.givenName} ${name.familyName}`,
-            picture: photos[0].value
+            picture: photos[0].value,
+            accessToken,
+            refreshToken
           };
       
          done(null, user);
