@@ -1,10 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, InternalServerErrorException, ForbiddenException, Catch, ExceptionFilter, ArgumentsHost, HttpException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role, } from './enums/Role.enum';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './Service/user-service/user-service.service';
-import { FileUtilsService } from 'src/Files/file.utils';
 import { User } from './Schema/user.schema';
 import { ROLES_KEY } from 'src/roles.decorator';
 @Injectable()
@@ -28,7 +27,6 @@ export class RolesGuard implements CanActivate {
                 console.error('User not found in the request object');
                 throw new ForbiddenException()
             }
-
             let result = requiredRoles.some((role) => roles?.includes(role));
             if (!result) {
                 throw new ForbiddenException()
@@ -36,8 +34,14 @@ export class RolesGuard implements CanActivate {
             return true
 
         } catch (err) {
-            console.log(err)
+           if (err instanceof HttpException) {
+            if (err.getStatus() == 403) {
+                throw new ForbiddenException()
+            }
+           }
+           else {
             throw new InternalServerErrorException();
+           }
         }
     }
 

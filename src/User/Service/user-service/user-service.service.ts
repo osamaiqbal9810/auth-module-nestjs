@@ -22,12 +22,7 @@ export class UserService {
                 data: {
                     name: dto.name.toString(),
                     email: dto.email.toLowerCase().toString(),
-                    roles: dto.roles.map((role) => {
-                        if (!Object.values(Role).includes(role)) {
-                            throw new Error(`Invalid Role value`) // if invalid role is provided then stop user creation
-                        }
-                        return role.toString()
-                    }),
+                    roles: [Role[Role.User]],
                     subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic]
                 },
             });
@@ -64,6 +59,7 @@ export class UserService {
         userObj.name = user.name
         userObj.email = user.email
         userObj.roles = user.roles // TODO convert to Role
+        userObj.isRemoved = user.isRemoved
         return userObj
 
     }
@@ -126,19 +122,8 @@ export class UserService {
             data: {
               name: dto.name.toString(),
               email: dto.email.toLowerCase().toString(),
-              roles: dto.roles.map((role) => {
-                if (!Object.values(Role).includes(role)) {
-                  throw new Error(`Invalid Role value`);
-                }
-                return role.toString();
-              }),
-              subscriptionPlan: (() => {
-                const plan = dto.subscriptionPlan.toString();
-                if (Object.values(SubscriptionPlan).includes(plan)) {
-                  return SubscriptionPlan[dto.subscriptionPlan];
-                }
-                throw new Error(`Invalid Subscription plan value`);
-              })(),
+              roles: [Role[Role.User]],
+              subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
             },
           });
           const payload = { _id: user.id }

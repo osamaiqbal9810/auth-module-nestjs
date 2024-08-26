@@ -6,7 +6,8 @@ export const createApiResponseSchema = (
     statusMessage: string,
     message: string | string[],
     additionalProps: Record<string, SchemaObject | ReferenceObject> = {},
-): ApiResponseOptions => ({
+): ApiResponseOptions => (
+    {
     status: statusCode,
     description: statusMessage,
     schema: {

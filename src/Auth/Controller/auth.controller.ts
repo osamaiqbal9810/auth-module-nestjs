@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, HttpStatus, InternalServerErrorException, Post, Req, Request, Res, Response, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiNotFoundResponse, ApiOkResponse, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
 import { PasswordDto } from 'src/User/DTO/PasswordDto';
@@ -8,8 +8,6 @@ import { AuthGuard } from 'src/Auth/auth.guard';
 import { GoogleOauthGuard } from './google-auth.guard';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { UserDto } from 'src/User/DTO/user.dto';
-import { use } from 'passport';
-import { Role } from 'src/User/enums/Role.enum';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { User } from 'src/User/Schema/user.schema';
 
@@ -21,7 +19,7 @@ export class AuthController {
         type: 'string',
         example: "ey7yrgbu7yr4ir982y2i9yr92u90399"
     }, user: {
-        $ref: getSchemaPath(UserDto),
+        $ref: getSchemaPath(User),
     }}))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "Login Failed! user not found"))
     @ApiBody({ type: SignInDto })
@@ -100,7 +98,16 @@ export class AuthController {
 
     @ApiTags("Auth")
     @Get('google/callback')
-    @ApiOkResponse(createApiResponseSchema(200, "Success","Logged in successfully"))
+    @ApiExtraModels(User)
+    @ApiOkResponse(createApiResponseSchema(200, "Success","Logged in successfully", {
+        access_token: {
+            type: 'string',
+            example: 'g7fgufh83yh893ytgh93yhg9g8y93'
+        },
+        user: {
+            $ref: getSchemaPath(User)
+        }
+    }))
     @ApiNotFoundResponse(createApiResponseSchema(404,"Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
     async googleAuthCallback(@Req() req, @Response() res): Promise<{acces_token: string, user: User}> {
@@ -110,7 +117,6 @@ export class AuthController {
                 const userDto = new UserDto()
                 userDto.name = user.name
                 userDto.email = user.email
-                userDto.roles = [Role.User]  
                 
                 const token = await this.authService.authGmailUser(userDto)
                 res.cookie('access_token', token.access_token, {

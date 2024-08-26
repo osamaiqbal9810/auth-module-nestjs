@@ -21,7 +21,6 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
       const request = context.switchToHttp().getRequest();
       const token = this.extractTokenFromHeader(request);
 
-      console.log(token)
       if (!token) {
         throw new UnauthorizedException();
       }
@@ -36,10 +35,12 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
         if (!payload || !payload._id) {
           throw new UnauthorizedException()
         }
-        const user: users = await this.userService.findOneById(payload._id) as users
-        if (!user || !user.isRemoved) {
+        
+        const user = await this.userService.findOneById(payload._id) 
+        if (!user || user.isRemoved) {
           throw new UnauthorizedException()
         }
+        
         // 💡 We're assigning the payload to the request object here
         // so that we can access it in our route handlers
         request.user = payload; //TODO Do we need to attach complete user?

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { FileDto } from "../DTO/File.dto";
+import { FileDto } from "../DTO/file.dto";
 import { PrismaService } from "src/prisma.service";
 import { planProperties, SubscriptionPlan } from "src/User/enums/SubscriptionPlan.enum";
 import { files } from "@prisma/client";

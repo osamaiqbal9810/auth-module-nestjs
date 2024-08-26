@@ -1,9 +1,8 @@
 import { BadRequestException, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBadRequestResponse, ApiBearerAuth, ApiNotModifiedResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiNotModifiedResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FileDto } from "../DTO/File.dto";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
 
@@ -14,18 +13,26 @@ import { SkipThrottle } from "@nestjs/throttler";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
 import { AuthGuard } from "src/Auth/auth.guard";
-import { error } from "console";
+import { FileDto } from "../DTO/file.dto";
+
 
 
 
 @Controller('files')
 @UseGuards(AuthGuard)
+
 export class FileController {
   constructor(private readonly fileService: FilesService, private readonly userService: UserService) { }
   @ApiTags("Files")
+  @ApiExtraModels(FileDto)
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {file:
+    {
+      $ref: getSchemaPath(FileDto),
+    }
+  }))
+  @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to upload file"))
   @Post("/upload")
   @ApiBearerAuth()
-
   // Rate limiting is applied to this route.
   @SkipThrottle({ default: false })
   @UseInterceptors(
@@ -41,16 +48,11 @@ export class FileController {
     })
   )
 
-  @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {
-    file: {
-      $ref: getSchemaPath(FileDto),
-    }
-  }))
-  @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to upload file"))
+
   async uploadFile(@Response() res, @UploadedFile() file: Express.Multer.File, @Request() request): Promise<{ message: string, fileInfo: FileDto }> {
     try {
       if (!file) {
-        throw new Error('No file uploaded');
+        throw new BadRequestException('No file uploaded');
       }
       let fileDto = new FileDto()
       fileDto.fileName = file.filename
@@ -72,16 +74,17 @@ export class FileController {
         }
       }
     } catch (err) {
-      throw new InternalServerErrorException()
+      throw new InternalServerErrorException('An error occurred while uploading the file')
     }
   }
 
   @Get()
   @ApiTags("Files")
   @ApiBearerAuth()
-  @ApiOkResponse(createApiResponseSchema(200, "Success","Files fetching success", {
-    file: {
-      $ref: getSchemaPath(FileDto),
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "Files fetched successfully", {
+    files: {
+      type: 'array',
+          items: { $ref: getSchemaPath(FileDto) }
     }
   }))
    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to fetch files"))

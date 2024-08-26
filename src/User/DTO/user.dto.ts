@@ -18,9 +18,4 @@ export class UserDto {
     @ApiProperty()
     @IsString()
     password: String
-
-    @ApiProperty()
-    @IsNotEmpty()
-    roles: Role[]
-    subscriptionPlan: any;
 }

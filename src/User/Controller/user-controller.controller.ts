@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, Param, Post, Query, Response, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiNotFoundResponse, ApiNotModifiedResponse, ApiOkResponse, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiNotModifiedResponse, ApiOkResponse, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
@@ -18,10 +18,11 @@ export class UserController {
     constructor(private readonly userService: UserService) { }
     // sign up
     @ApiTags("User")
-    //@ApiBody({ type: UserDto })
+    @ApiBody({ type: UserDto })
+    @ApiExtraModels(User)
     @ApiOkResponse(createApiResponseSchema(200, "Success","User has been created successfully.",{
         user: {
-          $ref: getSchemaPath(UserDto),
+          $ref: getSchemaPath(User),
         }
       }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to create user"))
@@ -49,7 +50,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success","User Found", {
         user: {
-          $ref: getSchemaPath(UserDto),
+          $ref: getSchemaPath(User),
         }
       }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
@@ -67,7 +68,7 @@ export class UserController {
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200,"Success", "User found", {
         user: {
-          $ref: getSchemaPath(UserDto),
+          $ref: getSchemaPath(User),
         }
       }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found","User not found"))
@@ -104,8 +105,9 @@ export class UserController {
     @UseGuards(RolesGuard)
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success","User deleted Successfully", {
-        user: {
-          $ref: getSchemaPath(UserDto),
+        userId: {
+            type: 'string',
+            example: "049023849029329323"
         }
       }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
@@ -123,8 +125,9 @@ export class UserController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     @ApiOkResponse(createApiResponseSchema(200, "Successs","User deleted Successfully", {
-        user: {
-          $ref: getSchemaPath(UserDto),
+        userId: {
+            type: 'string',
+            example: "049023849029329323"
         }
       }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found","User not found"))
@@ -160,7 +163,7 @@ export class UserController {
     @ApiTags("User")
     @ApiOkResponse(createApiResponseSchema(200, "Success","Password updated successfully", {
         user: {
-          $ref: getSchemaPath(UserDto),
+          $ref: getSchemaPath(User),
         }
       }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Password update failed. Reset token may got expired or User may not exist"))

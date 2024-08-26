@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsBoolean, IsEmail, IsNotEmpty, IsString } from "class-validator";
 
 export class User {
 
@@ -23,6 +23,9 @@ export class User {
     @IsArray()
     @IsNotEmpty()
     roles: String[]
+
+    @IsBoolean()
+    isRemoved: Boolean = false
 }
 
 export class CreatedUserDto extends User {}
