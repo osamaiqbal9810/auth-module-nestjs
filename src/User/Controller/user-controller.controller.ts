@@ -1,7 +1,7 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpStatus, InternalServerErrorException, NotFoundException, Param, Post, Query, Response, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiNotModifiedResponse, ApiOkResponse, ApiParam, ApiQuery, ApiResponse, ApiResponseOptions, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
@@ -61,8 +61,8 @@ export class UserController {
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
-    async findOne(@Response() response, @Query('email') email: String): Promise<{message: String, user: User}> {
-        return this.findUser(response, () => this.userService.findOneByEmail(email), email);
+    async findOne(@Query('email') email: String): Promise<{message: String, user: User}> {
+        return this.findUser( () => this.userService.findOneByEmail(email), email);
     }
 
     // Find user by ID
@@ -79,12 +79,12 @@ export class UserController {
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
     @Roles(Role.Admin)
-    async findOneById(@Response() response, @Param('id') id: String): Promise<{message: String, user: User}> {
-        return this.findUser(response, () => this.userService.findOneById(id), id);
+    async findOneById(@Param('id') id: String): Promise<{message: String, user: User}> {
+        return this.findUser( () => this.userService.findOneById(id), id);
     }
 
     // Common method to handle both by email and by ID
-    private async findUser(response, user: () => Promise<User>, identifier: String): Promise<{statusCode: Number, message: String, user: User}> {
+    private async findUser( user: () => Promise<User>, identifier: String): Promise<{statusCode: Number, message: String, user: User}> {
         try {
             const existingUser = await user();
             if (existingUser) {
@@ -118,8 +118,8 @@ export class UserController {
     @Delete()
     @Roles(Role.Admin)
 
-    async delete(@Response() response, @Query('email') email: string): Promise<{statusCode: Number, message: String, userId: String}> {
-        return await this.deleteUser(response, () => this.userService.deleteUser(email))
+    async delete(@Query('email') email: string): Promise<{statusCode: Number, message: String, userId: String}> {
+        return await this.deleteUser(() => this.userService.deleteUser(email))
     }
 
     // delete by Id
@@ -138,11 +138,11 @@ export class UserController {
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
   
-    async deleteUserById(@Response() response, @Param('id') id: string): Promise<{statusCode: Number, message: String, userId: String}> {
-        return await this.deleteUser( response, () => this.userService.deleteUserById(id) )    
+    async deleteUserById(@Param('id') id: string): Promise<{statusCode: Number, message: String, userId: String}> {
+        return await this.deleteUser(() => this.userService.deleteUserById(id) )    
     }
 
-    async deleteUser(@Response() response, user: () => Promise<User>): Promise<{ statusCode: Number, message: String, userId: String}> {
+    async deleteUser(user: () => Promise<User>): Promise<{ statusCode: Number, message: String, userId: String}> {
         try {
             let deletedUser = await user();
             if (deletedUser) {

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy, VerifyCallback } from "passport-google-oauth20";
 
-interface GoogleProfile {
+export interface GoogleProfile {
     id: string;
     emails: { value: string }[]
     name: {
@@ -11,6 +11,17 @@ interface GoogleProfile {
     };
     photos: { value: string }[]
   }
+
+  
+export interface GoogleProfileTranslated {
+    provider: string,
+    providerId: string,
+    email: string
+    name: string
+    picture: string
+  }
+
+
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     constructor() {

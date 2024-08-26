@@ -1,13 +1,13 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
-import { useContainer, validateOrReject } from 'class-validator'
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { Role } from 'src/User/enums/Role.enum';
 import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
 import { AuthService } from 'src/Auth/Service/auth.service';
+import { users } from '@prisma/client';
 
 
 @Injectable()
@@ -115,7 +115,7 @@ export class UserService {
 
     // google log in
 
-    async createGmailUser(dto: UserDto): Promise<{access_token: String}> {
+    async createGmailUser(dto: UserDto): Promise<{access_token: String, user: users}> {
         let existingUser = await  this.findOneByEmail(dto.email)
         if (!existingUser) {
         const user = await this.prismaService.users.create({
@@ -126,12 +126,12 @@ export class UserService {
               subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
             },
           });
-          const payload = { _id: user.id }
-         return { access_token: await this.authService.generateJWT(payload)  }
+          const payload = { _id: user.id.toString(), roles: user.roles}
+         return { access_token: await this.authService.generateJWT(payload), user: user  }
         }
         else {
-            const payload = { _id: existingUser.id }
-            return { access_token: await this.authService.generateJWT(payload)  }
+            const payload = { _id: existingUser.id, roles: existingUser.roles }
+            return { access_token: await this.authService.generateJWT(payload), user: existingUser as users  }
         }
          
     }

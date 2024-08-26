@@ -1,17 +1,17 @@
-import { BadRequestException, Controller, Delete, Get, HttpStatus, InternalServerErrorException, NotFoundException, Post, Query, Req, Request, Res, Response, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { BadRequestException, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Post, Query, Req, Request, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiNotModifiedResponse, ApiOkResponse, ApiQuery, ApiResponse, ApiTags, getSchemaPath } from "@nestjs/swagger";
+import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
 import { FILE_SIZE } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
-import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "../file.utils";
 import { SkipThrottle } from "@nestjs/throttler";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
 import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/file.dto";
+import { JWTPayloadModel } from "src/Payload.model";
 
 
 
@@ -20,7 +20,7 @@ import { FileDto } from "../DTO/file.dto";
 @UseGuards(AuthGuard)
 
 export class FileController {
-  constructor(private readonly fileService: FilesService, private readonly userService: UserService) { }
+  constructor(private readonly fileService: FilesService) { }
   @ApiTags("Files")
   @ApiExtraModels(FileDto)
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {file:
@@ -45,7 +45,7 @@ export class FileController {
       fileFilter: FileUtilsService.fileFilter
     })
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request): Promise<{ statusCode: Number, message: String, fileInfo: FileDto }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, fileInfo: FileDto }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
@@ -55,9 +55,9 @@ export class FileController {
       fileDto.originalName = file.originalname
       fileDto.path = `/${process.env.FILEUPLOAD_DIR}/${file.filename}`
       fileDto.fileSize = file.size
-      const userId = request['user']?._id
-      if (userId) {
-        fileDto.userId = userId;
+      const user = request['user'] as JWTPayloadModel
+      if (user && user._id) {
+        fileDto.userId = user._id.valueOf();
         const isUploaded = this.fileService.saveUploadedFileInfo(fileDto)
         if (isUploaded) {
           return {
@@ -88,11 +88,12 @@ export class FileController {
     }
   }))
    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to fetch files"))
-  async getUserFiles(@Req() request: Request, @Response() response): Promise<{statusCode: Number, message: String, files: FileDto[] }> {
+  async getUserFiles(@Req() request: Express.Request): Promise<{statusCode: Number, message: String, files: FileDto[] }> {
     try {
-      const userId = request['user']?._id;
-      if (userId) {
-        const files = await this.fileService.getAllFilesForUser(userId);
+      // TODO
+      const user = request['user'] as JWTPayloadModel
+      if (user && user._id) {
+        const files = await this.fileService.getAllFilesForUser(user._id);
         if (files) {
           return {
             statusCode: 200,

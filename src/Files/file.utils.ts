@@ -1,5 +1,5 @@
 
-import { extname, join } from 'path';
+import { extname } from 'path';
  import { Request } from 'express';
 import { AllowedFileTypes } from './file-types.enum';
 import { BadRequestException, Injectable, NotAcceptableException } from '@nestjs/common';
@@ -10,7 +10,7 @@ import { planProperties, SubscriptionPlan } from 'src/User/enums/SubscriptionPla
 @Injectable()
 export class FileUtilsService {
   constructor(private readonly prismaService: PrismaService) {
-    FileUtilsHolder.setPrismaService(prismaService); // Set the Prisma in the holder
+    FileUtilsHolder.setPrismaService(this.prismaService); // Set the Prisma in the holder
   }
   static fileNameEditor = (
     _req: Request,

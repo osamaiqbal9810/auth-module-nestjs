@@ -7,7 +7,6 @@ import { FileUtilsService } from "./file.utils";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthService } from "src/Auth/Service/auth.service";
-import { AuthGuard } from "src/Auth/auth.guard";
 
 
 @Module({
@@ -21,11 +20,7 @@ import { AuthGuard } from "src/Auth/auth.guard";
     providers: [FilesService, PrismaService, UserService, FileUtilsService,AuthService, {
         provide: APP_GUARD,
         useClass: ThrottlerGuard
-      },
-      // {
-        //provide: APP_GUARD,
-    //    useClass: AuthGuard
-       //}
+      }
       ]
 })
 

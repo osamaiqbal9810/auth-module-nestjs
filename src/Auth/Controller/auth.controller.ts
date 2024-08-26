@@ -1,20 +1,19 @@
-import NestJsCommon, { BadRequestException, Body, Controller, Get, HttpStatus, InternalServerErrorException, NotFoundException, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import {  Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
 import { PasswordDto } from 'src/User/DTO/PasswordDto';
 import { AuthGuard } from 'src/Auth/auth.guard';
-
 import { GoogleOauthGuard } from './google-auth.guard';
-import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { User } from 'src/User/Schema/user.schema';
 import Express from 'express';
+import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService, private userService: UserService) { }
+    constructor(private authService: AuthService) { }
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully!", {
         access_token: {
@@ -80,7 +79,7 @@ export class AuthController {
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User doesn't exist"))
     @Post("/forgotPassword")
     @ApiBody({ type: PasswordDto })
-    async generatePasswordResetToken(@Request() req, @Body() passwordDto: PasswordDto): Promise<{statusCode: Number,message: String}> {
+    async generatePasswordResetToken(@Request() req: Express.Request, @Body() passwordDto: PasswordDto): Promise<{statusCode: Number,message: String}> {
         try {
             const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
             let result = await this.authService.generatePasswordResetToken(passwordDto.email.toLowerCase(), serverUrl)
@@ -122,15 +121,15 @@ export class AuthController {
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req): Promise<{ statusCode: Number, message: String, access_token: String, user: User }> {
+    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: User }> {
         try {
-            let user = req['user']
+            let user = req['user'] as GoogleProfileTranslated
             if (user) {
                 const userDto = new UserDto()
                 userDto.name = user.name
                 userDto.email = user.email
 
-                const token = await this.authService.authGmailUser(userDto)
+                const result = await this.authService.authGmailUser(userDto)
                 //TODO://
                 // res.cookie('access_token', token.access_token, {
                 //     httpOnly: true,
@@ -141,8 +140,8 @@ export class AuthController {
                 return {
                     statusCode: 200,
                     message: "Logged in successfully",
-                    access_token: token.access_token,
-                    user: user
+                    access_token: result.access_token,
+                    user: result.user
                 }
             }
             throw new NotFoundException("User not found")

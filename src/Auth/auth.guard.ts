@@ -5,11 +5,9 @@ import {
     UnauthorizedException,
   } from '@nestjs/common';
   import { JwtService } from '@nestjs/jwt';
-import { PrismaClient, users } from '@prisma/client';
 
   import { Request } from 'express';
-import { PrismaService } from 'src/prisma.service';
-import { User } from 'src/User/Schema/user.schema';
+
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 
 

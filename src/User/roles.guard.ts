@@ -1,14 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext, InternalServerErrorException, ForbiddenException, Catch, ExceptionFilter, ArgumentsHost, HttpException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, InternalServerErrorException, ForbiddenException, HttpException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role, } from './enums/Role.enum';
-import { Request } from 'express';
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from './Service/user-service/user-service.service';
 import { User } from './Schema/user.schema';
 import { ROLES_KEY } from 'src/roles.decorator';
 @Injectable()
 export class RolesGuard implements CanActivate {
-    constructor(private reflector: Reflector, private jwtService: JwtService, private userService: UserService) { }
+    constructor(private reflector: Reflector) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
@@ -43,10 +40,5 @@ export class RolesGuard implements CanActivate {
             throw new InternalServerErrorException();
            }
         }
-    }
-
-    private extractTokenFromHeader(request: Request): string | undefined {
-        const [type, token] = request.headers.authorization?.split(' ') ?? [];
-        return type === 'Bearer' ? token : undefined;
     }
 }
