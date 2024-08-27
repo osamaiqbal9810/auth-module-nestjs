@@ -9,6 +9,8 @@ import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
 import { FILE_UPLOAD_DIR } from './Files/file-constnats';
+import { ThrottlerModule } from '@nestjs/throttler';
+
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { FILE_UPLOAD_DIR } from './Files/file-constnats';
         index: false
        },
     }),
+
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

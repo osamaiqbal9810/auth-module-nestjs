@@ -41,6 +41,7 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
         
         // 💡 We're assigning the payload to the request object here
         // so that we can access it in our route handlers
+       
         request.user = payload; //TODO Do we need to attach complete user?
       } catch {
         throw new UnauthorizedException();

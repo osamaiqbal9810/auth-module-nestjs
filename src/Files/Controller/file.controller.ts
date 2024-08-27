@@ -3,21 +3,19 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FILE_SIZE, FILE_UPLOAD_DIR } from "../file-constnats";
+import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../file-constnats";
 import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
-import { SkipThrottle } from "@nestjs/throttler";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
 import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/file.dto";
 import { JWTPayloadModel } from "src/Payload.model";
-
-
+import { Throttle } from "@nestjs/throttler";
+import { UserIdThrottleGuard } from "src/throttleUser.guard";
 
 
 @Controller('files')
-@UseGuards(AuthGuard)
 
 export class FileController {
   constructor(private readonly fileService: FilesService) { }
@@ -29,10 +27,11 @@ export class FileController {
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to upload file"))
+  @Throttle({ default: { limit: 1000, ttl: 60000 } })
+   @Throttle_Limit(50)
+   @Throttle_Ttl(6000)
   @Post("/upload")
   @ApiBearerAuth()
-  // Rate limiting is applied to this route.
-  @SkipThrottle({ default: false })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -45,6 +44,7 @@ export class FileController {
       fileFilter: FileUtilsService.fileFilter
     })
   )
+
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, fileInfo: FileDto }> {
     try {
       if (!file) {
@@ -88,6 +88,9 @@ export class FileController {
     }
   }))
    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request","Failed to fetch files"))
+   @Throttle({ default: { limit: 1000, ttl: 60000 } })
+   @Throttle_Limit(50)
+   @Throttle_Ttl(6000)
   async getUserFiles(@Req() request: Express.Request): Promise<{statusCode: Number, message: String, files: FileDto[] }> {
     try {
       // TODO
@@ -122,7 +125,9 @@ export class FileController {
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to delete file"))
-
+  @Throttle({ default: { limit: 1000, ttl: 60000 } })
+  @Throttle_Limit(50)
+  @Throttle_Ttl(6000)
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
   async delete(@Query('fileId') fileId: String): Promise<{statusCode: Number, message: String, fileId: String }> {
     try {
@@ -142,5 +147,4 @@ export class FileController {
       throw new InternalServerErrorException()
     }
   }
-
 }

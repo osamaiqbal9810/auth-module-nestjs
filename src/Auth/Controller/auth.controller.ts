@@ -10,10 +10,14 @@ import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { User } from 'src/User/Schema/user.schema';
 import Express from 'express';
 import { GoogleProfileTranslated } from '../Strategies/google.strategy';
+import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { UserIdThrottleGuard } from 'src/throttleUser.guard';
+import { Throttle_Limit, Throttle_Ttl } from 'src/Files/file-constnats';
 
 @Controller('auth')
+// @SkipThrottle({ default: false })
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(private authService: AuthService) {}
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully!", {
         access_token: {
@@ -25,6 +29,7 @@ export class AuthController {
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "Login Failed! user not found"))
     @ApiBody({ type: SignInDto })
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post("/signIn")
     async signIn(@Body() signInDto: SignInDto): Promise<{ message: String, access_token: String, user: User }> {
 
@@ -58,8 +63,13 @@ export class AuthController {
 
     @ApiTags("Auth")
     @ApiBearerAuth()
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, UserIdThrottleGuard)
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
+    @Throttle_Limit(5)
+    @Throttle_Ttl(60)
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logout success."))
+   
+    
     @Get('signOut')
     async signOut(): Promise<{statusCode: Number, message: String }> {
         try {
@@ -103,6 +113,7 @@ export class AuthController {
     // Google Authentication
     @ApiTags("Auth")
     @Get('google')
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @UseGuards(GoogleOauthGuard)
     async auth() {
         // initiate google login oage
@@ -110,6 +121,7 @@ export class AuthController {
 
     @ApiTags("Auth")
     @Get('google/callback')
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
     @ApiExtraModels(User)
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully", {
         access_token: {

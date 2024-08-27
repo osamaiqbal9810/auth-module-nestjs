@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, SetMetadata, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
@@ -9,17 +9,17 @@ import { RolesGuard } from '../roles.guard';
 import { Role } from '../enums/Role.enum';
 import { Roles } from 'src/roles.decorator';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
-
-
-
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('user')
+@SkipThrottle({ default: false })
 export class UserController {
     constructor(private readonly userService: UserService) { }
     // sign up
     @ApiTags("User")
     @ApiBody({ type: UserDto })
     @ApiExtraModels(User)
+
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.", {
         user: {
             $ref: getSchemaPath(User),
@@ -27,6 +27,7 @@ export class UserController {
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to create user"))
     @Post()
+    
     async createUser(@Body() dto: UserDto): Promise<{ statusCode: Number, message: String, user: User }> {
         try {
             const user = await this.userService.createUser(dto)
@@ -187,3 +188,4 @@ export class UserController {
         }
     }
 }
+
