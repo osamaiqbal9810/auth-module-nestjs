@@ -45,6 +45,7 @@ export class UserIdThrottleGuard implements CanActivate {
         // Extract user ID from the request (assumed to be available)
     
         const userId = req.user?._id; // Adjust this according to where the user ID is stored in the request
+        console.log(req.user)
         if (!userId) {
             throw new BadRequestException('User ID not found in request');
         }
