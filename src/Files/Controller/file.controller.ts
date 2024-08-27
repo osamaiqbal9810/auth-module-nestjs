@@ -3,7 +3,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../file-constnats";
+import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../Global.constnats";
 import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";

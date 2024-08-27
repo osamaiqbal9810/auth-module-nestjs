@@ -12,7 +12,7 @@ import Express from 'express';
 import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/throttleUser.guard';
-import { Throttle_Limit, Throttle_Ttl } from 'src/Files/file-constnats';
+import { Throttle_Limit, Throttle_Ttl } from 'src/Files/Global.constnats';
 
 @Controller('auth')
 // @SkipThrottle({ default: false })

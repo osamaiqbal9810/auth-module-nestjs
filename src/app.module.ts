@@ -8,7 +8,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
-import { FILE_UPLOAD_DIR } from './Files/file-constnats';
+import { FILE_UPLOAD_DIR } from './Files/Global.constnats';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 

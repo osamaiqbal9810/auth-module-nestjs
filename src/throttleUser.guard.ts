@@ -1,6 +1,6 @@
 import { BadRequestException, CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { THROTTLE_LIMIT_KEY, THROTTLE_TTL_KEY } from './Files/file-constnats';
+import { THROTTLE_LIMIT_KEY, THROTTLE_TTL_KEY } from './Files/Global.constnats';
 
 import { HttpException, HttpStatus } from '@nestjs/common';
 
