@@ -19,8 +19,8 @@
     "forceConsistentCasingInFileNames": false,
      "allowJs": false,
      "strict": true,
-    // "noUnusedLocals": true,
-   //  "noUnusedParameters": true,
+     "noUnusedLocals": true,
+     "noUnusedParameters": true,
      "noImplicitReturns": true,
      "noFallthroughCasesInSwitch": true
   }

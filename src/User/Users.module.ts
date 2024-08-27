@@ -4,8 +4,6 @@ import { UserService } from './Service/user-service/user-service.service';
 import { PrismaService } from 'src/prisma.service';
 import { FilesService } from 'src/Files/Service/files.service';
 import { AuthModule } from 'src/Auth/Auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { UserIdThrottleGuard } from 'src/throttleUser.guard';
 import { ThrottlerStorageService } from '@nestjs/throttler';
 
 

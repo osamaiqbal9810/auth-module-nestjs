@@ -99,8 +99,6 @@ export class UserService {
     }
 
     async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
-        console.log(email)
-        console.log(token)
         let userObj = await this.prismaService.userspasswords.findFirst({
             where: { resetToken: token.toString(), user: { email: email.toString()} },
             include: { user: true },
@@ -121,12 +119,11 @@ export class UserService {
     }
 
     async saveResetTokenAndExpiry(userId: String, token: String, tokenExpiryDate: Date): Promise<boolean> {
-        console.log(token)
         let result = await this.prismaService.userspasswords.update({
             where: { userId: userId.toString() },
             data: { resetToken: token.toString(), tokenExpiryDate: new Date(tokenExpiryDate) }
         })
-        console.log(result)
+
         return result ? true : false
     }
 

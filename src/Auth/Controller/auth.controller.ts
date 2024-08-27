@@ -10,7 +10,7 @@ import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { User } from 'src/User/Schema/user.schema';
 import Express from 'express';
 import { GoogleProfileTranslated } from '../Strategies/google.strategy';
-import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'src/Files/file-constnats';
 

@@ -9,7 +9,8 @@ import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
 import { FILE_UPLOAD_DIR } from './Files/file-constnats';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -30,9 +31,15 @@ import { ThrottlerModule } from '@nestjs/throttler';
         index: false
        },
     }),
-
+    ThrottlerModule.forRoot([{
+      ttl: Number(process.env.THROTTLE_TTL),
+      limit: Number(process.env.THROTTLE_REQUESTS_COUNT),
+  }])
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  }],
 })
 export class AppModule { }

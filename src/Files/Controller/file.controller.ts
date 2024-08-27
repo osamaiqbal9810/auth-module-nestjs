@@ -8,15 +8,16 @@ import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
-import { AuthGuard } from "src/Auth/auth.guard";
 import { FileDto } from "../DTO/file.dto";
 import { JWTPayloadModel } from "src/Payload.model";
 import { Throttle } from "@nestjs/throttler";
+import { AuthGuard } from "src/Auth/auth.guard";
 import { UserIdThrottleGuard } from "src/throttleUser.guard";
 
 
-@Controller('files')
 
+@Controller('files')
+@UseGuards(AuthGuard, UserIdThrottleGuard)
 export class FileController {
   constructor(private readonly fileService: FilesService) { }
   @ApiTags("Files")

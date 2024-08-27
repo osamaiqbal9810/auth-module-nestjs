@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, SetMetadata, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserDto } from '../DTO/user.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
@@ -183,7 +183,6 @@ export class UserController {
             if (err instanceof BadRequestException) {
                 throw err
             }
-            console.log(err)
             throw new InternalServerErrorException()
         }
     }
