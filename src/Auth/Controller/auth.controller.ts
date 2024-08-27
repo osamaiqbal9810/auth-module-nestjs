@@ -63,6 +63,7 @@ export class AuthController {
     @Get('signOut')
     async signOut(): Promise<{statusCode: Number, message: String }> {
         try {
+            // TODO: blacklist jwt token 
         //    res.clearCookie('jwt') TODO://
             // return res.status(200).json({ message: 'Signed out successfully' });
             return {
@@ -89,7 +90,7 @@ export class AuthController {
                     message: "An email has been sent to you including password reset link, you can reset password using this link"
                 }
             } 
-            throw new NotFoundException("User not found and unable to send the email")
+            throw new NotFoundException("User not found and unable to send the password reset email")
 
         } catch (error) {
             if (error instanceof NotFoundException) {

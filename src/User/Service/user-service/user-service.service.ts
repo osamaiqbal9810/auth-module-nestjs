@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserDto } from 'src/User/DTO/user.dto';
 import { User } from 'src/User/Schema/user.schema';
 import * as bcrypt from 'bcrypt';
@@ -8,15 +8,20 @@ import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
 import { AuthService } from 'src/Auth/Service/auth.service';
 import { users } from '@prisma/client';
+import { validateOrReject } from 'class-validator';
+
 
 
 @Injectable()
 export class UserService {
-    constructor(private prismaService: PrismaService,  @Inject(forwardRef(() => AuthService)) private authService: AuthService) { }
+    constructor(private prismaService: PrismaService, @Inject(forwardRef(() => AuthService)) private authService: AuthService) { }
 
     async createUser(dto: UserDto): Promise<User> {
-       // await validateOrReject(dto);
-       
+        await validateOrReject(dto);
+        const existingUser = await this.findOneByEmail(dto.email)
+        if (existingUser) {
+            throw new BadRequestException("User with same email address already exist")
+        }
         const result = await this.prismaService.$transaction(async (prisma) => {
             const user = await prisma.users.create({
                 data: {
@@ -29,13 +34,13 @@ export class UserService {
             let salt = await bcrypt.genSalt()
             let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
             // Step 2: Create the password entry for the user
-            await prisma.userspasswords.create({
+             await prisma.userspasswords.create({
                 data: {
-                    hashedPassword:  hashedPassword,
+                    hashedPassword: hashedPassword,
                     userId: user.id,
                 },
             });
-            return user
+            return user 
         })
         return result
     }
@@ -58,7 +63,7 @@ export class UserService {
             user.id,
             user.name,
             user.email,
-            user.roles,  // Ensure roles is in the correct format if conversion is needed
+            user.roles, 
             user.isRemoved
         );
         return userObj
@@ -67,74 +72,85 @@ export class UserService {
 
     async deleteUser(email: string): Promise<User> {
         return await this.prismaService.users.update({
-            where: {email: email},
-            data: {isRemoved: true}
+            where: { email: email },
+            data: { isRemoved: true }
         })
     }
 
     async deleteUserById(id: string): Promise<User> {
-        return await this.prismaService.users.update({ 
+        return await this.prismaService.users.update({
             where: { id: id },
-            data: {isRemoved: true} 
+            data: { isRemoved: true }
         })
     }
 
-    async resetPassword(token: String, passwordDto: PasswordResetDto): Promise<boolean> {
+    async resetPassword(token: String, passwordDto: PasswordResetDto): Promise<void> {
         const user = await this.getUserByEmailAndResetToken(passwordDto.email.toLowerCase(), token)
-        if (!user) {
-            return false
-        }
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(passwordDto.newPassword, salt)
         const updatedPassword = await this.prismaService.userspasswords.update({
             where: { userId: user.id.toString() },
-            data: { hashedPassword: hashedPassword, resetToken: "", tokenExpiryDate: "" }
+            data: { hashedPassword: hashedPassword, resetToken: "", tokenExpiryDate: null }
         })
-        return updatedPassword ? true : false
+
+        if (!updatedPassword) {
+            throw new InternalServerErrorException()
+        }
     }
 
-    async getUserByEmailAndResetToken(email: String, token: String): Promise<User | null> {
+    async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
+        console.log(email)
+        console.log(token)
         let userObj = await this.prismaService.userspasswords.findFirst({
-            where: { resetToken: token.valueOf(), user: { email: email.valueOf() } },
+            where: { resetToken: token.toString(), user: { email: email.toString()} },
             include: { user: true },
         });
-
-        if (userObj) {
-            return userObj.user
+        if (!userObj || !userObj.user) {
+            throw new BadRequestException("User with this email and valid token doesn't exist")
         }
-        return null
+
+        if (userObj.tokenExpiryDate && userObj.tokenExpiryDate < new Date()) {
+            // invalidate reset token by deleting it from database
+            await this.prismaService.userspasswords.update({
+                where: { userId: userObj.user.id.toString() },
+                data: { resetToken: "" }
+            })
+            throw new BadRequestException("Reset token got expired. Please try again.")
+        }
+        return userObj.user
     }
 
     async saveResetTokenAndExpiry(userId: String, token: String, tokenExpiryDate: Date): Promise<boolean> {
+        console.log(token)
         let result = await this.prismaService.userspasswords.update({
-            where: { userId: userId.valueOf() },
-            data: { resetToken: token.valueOf(), tokenExpiryDate: tokenExpiryDate }
+            where: { userId: userId.toString() },
+            data: { resetToken: token.toString(), tokenExpiryDate: new Date(tokenExpiryDate) }
         })
+        console.log(result)
         return result ? true : false
     }
 
 
     // google log in
-
-    async createGmailUser(dto: UserDto): Promise<{access_token: String, user: users}> {
-        let existingUser = await  this.findOneByEmail(dto.email)
+    async createGmailUser(dto: UserDto): Promise<{ access_token: String, user: users }> {
+        let existingUser = await this.findOneByEmail(dto.email)
         if (!existingUser) {
-        const user = await this.prismaService.users.create({
-            data: {
-              name: dto.name.toString(),
-              email: dto.email.toLowerCase().toString(),
-              roles: [Role[Role.User]],
-              subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
-            },
-          });
-          const payload = { _id: user.id.toString(), roles: user.roles}
-         return { access_token: await this.authService.generateJWT(payload), user: user  }
+            const user = await this.prismaService.users.create({
+                data: {
+                    name: dto.name.toString(),
+                    email: dto.email.toLowerCase().toString(),
+                    roles: [Role[Role.User]],
+                    subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
+                },
+            });
+            const payload = { _id: user.id.toString(), roles: user.roles }
+            return { access_token: await this.authService.generateJWT(payload), user: user }
         }
         else {
             const payload = { _id: existingUser.id, roles: existingUser.roles }
-            return { access_token: await this.authService.generateJWT(payload), user: existingUser as users  }
+            return { access_token: await this.authService.generateJWT(payload), user: existingUser as users }
         }
-         
+
     }
 
 }
