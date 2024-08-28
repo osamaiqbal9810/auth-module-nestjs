@@ -1,11 +1,11 @@
 import { BadRequestException, Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
-import { SignInDto } from '../DTO/SignInDto';
+
 import { AuthService } from '../Service/auth.service';
-import { PasswordDto } from 'src/User/DTO/PasswordDto';
+
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { GoogleOauthGuard } from './google-auth.guard';
-import { UserDto } from 'src/User/DTO/user.dto';
+import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { User } from 'src/User/Schema/user.schema';
 import Express from 'express';
@@ -16,6 +16,8 @@ import { Throttle_Limit, Throttle_Ttl } from 'src/Files/Global.constnats';
 import { JWTPayloadModel } from 'src/Payload.model';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { users } from '@prisma/client';
+import { UserSignInDto } from '../DTO/UserSignIn.dto';
+import { ForgotPasswordDto } from 'src/User/DTO/ForgotPassword.dto';
 
 
 @Controller('auth')
@@ -31,10 +33,10 @@ export class AuthController {
         }
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "Login Failed! user not found"))
-    @ApiBody({ type: SignInDto })
+    @ApiBody({ type: UserSignInDto })
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post("/signIn")
-    async signIn(@Body() signInDto: SignInDto): Promise<{ message: String, access_token: String, user: User }> {
+    async signIn(@Body() signInDto: UserSignInDto): Promise<{ message: String, access_token: String, user: User }> {
 
         try {
             const result = await this.authService.signIn(signInDto)
@@ -91,8 +93,8 @@ export class AuthController {
     @ApiOkResponse(createApiResponseSchema(200, "Success", "An email has been sent to you including password reset link, you can reset password using this link"))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User doesn't exist"))
     @Post("/forgotPassword")
-    @ApiBody({ type: PasswordDto })
-    async generatePasswordResetToken(@Request() req: Express.Request, @Body() passwordDto: PasswordDto): Promise<{ statusCode: Number, message: String }> {
+    @ApiBody({ type: ForgotPasswordDto })
+    async generatePasswordResetToken(@Request() req: Express.Request, @Body() passwordDto: ForgotPasswordDto): Promise<{ statusCode: Number, message: String }> {
         try {
             const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
             let result = await this.authService.generatePasswordResetToken(passwordDto.email.toLowerCase(), serverUrl)
@@ -140,7 +142,7 @@ export class AuthController {
         try {
             let user = req['user'] as GoogleProfileTranslated
             if (user) {
-                const userDto = new UserDto()
+                const userDto = new UserSignUpDto()
                 userDto.name = user.name
                 userDto.email = user.email
 
@@ -173,11 +175,10 @@ export class AuthController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, UserIdThrottleGuard)
     @ApiTags("Auth")
+   
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User found", {
-        files: {
-            type: 'array',
-            items: { $ref: getSchemaPath(User) }
-        }
+        user: { $ref: getSchemaPath(User) }
+        
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to fetch user"))
     @Throttle({ default: { limit: 100, ttl: 60000 } })

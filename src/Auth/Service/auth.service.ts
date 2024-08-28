@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { SignInDto } from '../DTO/SignInDto';
+
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -7,14 +7,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { User } from 'src/User/Schema/user.schema';
 import { PrismaService } from 'src/prisma.service';
-import { UserDto } from 'src/User/DTO/user.dto';
+import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
 import { users } from '@prisma/client';
 import { JWTPayloadModel } from 'src/Payload.model';
+import { UserSignInDto } from '../DTO/UserSignIn.dto';
 @Injectable()
 export class AuthService {
     constructor(private prismaService: PrismaService, @Inject(forwardRef(() => UserService)) private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
 
-    async signIn(signInDto: SignInDto): Promise<{access_token: String, user: User} | null> {
+    async signIn(signInDto: UserSignInDto): Promise<{access_token: String, user: User} | null> {
         const existingUser = await this.prismaService.users.findFirst({
             where: {email: signInDto.email.toLowerCase()},
             include: {password: true}
@@ -82,7 +83,7 @@ export class AuthService {
       return  await this.jwtService.signAsync(payload)
     }
 
-    async authGmailUser(userDto: UserDto): Promise<{access_token: String, user: users}> {
+    async authGmailUser(userDto: UserSignUpDto): Promise<{access_token: String, user: users}> {
      return await this.userService.createGmailUser(userDto)
     }
 }

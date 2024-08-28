@@ -14,7 +14,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
-    swaggerOptions: { defaultModelsExpandDepth: -1 }
+    // swaggerOptions: { defaultModelsExpandDepth: -1 }
   });
   app.useGlobalPipes(new ValidationPipe()) // schema validation
   //app.use('/files/upload', (req, res, next) => new ProgressMiddleware().use(req, res, next));

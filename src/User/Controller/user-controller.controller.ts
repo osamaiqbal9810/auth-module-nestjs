@@ -1,15 +1,15 @@
 import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
-import { UserDto } from '../DTO/user.dto';
+import { UserSignUpDto } from '../DTO/UserSignUp.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
-import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
 import { RolesGuard } from '../roles.guard';
 import { Role } from '../enums/Role.enum';
 import { Roles } from 'src/roles.decorator';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { SkipThrottle } from '@nestjs/throttler';
+import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
 
 @Controller('user')
 @SkipThrottle({ default: false })
@@ -17,7 +17,7 @@ export class UserController {
     constructor(private readonly userService: UserService) { }
     // sign up
     @ApiTags("User")
-    @ApiBody({ type: UserDto })
+    @ApiBody({ type: UserSignUpDto })
     @ApiExtraModels(User)
 
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.", {
@@ -28,7 +28,7 @@ export class UserController {
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to create user"))
     @Post()
     
-    async createUser(@Body() dto: UserDto): Promise<{ statusCode: Number, message: String, user: User }> {
+    async createUser(@Body() dto: UserSignUpDto): Promise<{ statusCode: Number, message: String, user: User }> {
         try {
             const user = await this.userService.createUser(dto)
             if (user) {
@@ -171,8 +171,8 @@ export class UserController {
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Password update failed. Reset token may got expired or User may not exist"))
     @Post("/reset-password")
     @ApiQuery({ name: 'reset-token', type: String })
-    @ApiBody({ type: PasswordResetDto })
-    async resetPassword(@Query("reset-token") token: String, @Body() resetDto: PasswordResetDto): Promise<{ statusCode: Number, message: String }> {
+    @ApiBody({ type: ResetPasswordDto })
+    async resetPassword(@Query("reset-token") token: String, @Body() resetDto: ResetPasswordDto): Promise<{ statusCode: Number, message: String }> {
         try {
             await this.userService.resetPassword(token, resetDto)
             return {

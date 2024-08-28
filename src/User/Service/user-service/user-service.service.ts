@@ -1,14 +1,15 @@
 import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { UserDto } from 'src/User/DTO/user.dto';
+import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
 import { User } from 'src/User/Schema/user.schema';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { Role } from 'src/User/enums/Role.enum';
-import { PasswordResetDto } from 'src/Auth/DTO/SignInDto';
+
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
 import { AuthService } from 'src/Auth/Service/auth.service';
 import { users } from '@prisma/client';
 import { validateOrReject } from 'class-validator';
+import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
 
 
 
@@ -16,7 +17,7 @@ import { validateOrReject } from 'class-validator';
 export class UserService {
     constructor(private prismaService: PrismaService, @Inject(forwardRef(() => AuthService)) private authService: AuthService) { }
 
-    async createUser(dto: UserDto): Promise<User> {
+    async createUser(dto: UserSignUpDto): Promise<User> {
         await validateOrReject(dto);
         const existingUser = await this.findOneByEmail(dto.email)
         if (existingUser) {
@@ -85,7 +86,7 @@ export class UserService {
         })
     }
 
-    async resetPassword(token: String, passwordDto: PasswordResetDto): Promise<void> {
+    async resetPassword(token: String, passwordDto: ResetPasswordDto): Promise<void> {
         const user = await this.getUserByEmailAndResetToken(passwordDto.email.toLowerCase(), token)
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(passwordDto.newPassword, salt)
@@ -130,7 +131,7 @@ export class UserService {
 
 
     // google log in
-    async createGmailUser(dto: UserDto): Promise<{ access_token: String, user: users }> {
+    async createGmailUser(dto: UserSignUpDto): Promise<{ access_token: String, user: users }> {
         let existingUser = await this.findOneByEmail(dto.email)
         if (!existingUser) {
             const user = await this.prismaService.users.create({
