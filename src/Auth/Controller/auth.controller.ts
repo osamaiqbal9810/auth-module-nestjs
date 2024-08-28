@@ -15,7 +15,6 @@ import { UserIdThrottleGuard } from 'src/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'src/Files/Global.constnats';
 
 @Controller('auth')
-// @SkipThrottle({ default: false })
 export class AuthController {
     constructor(private authService: AuthService) {}
     @ApiTags("Auth")
@@ -68,9 +67,8 @@ export class AuthController {
     @Throttle_Limit(5)
     @Throttle_Ttl(60)
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logout success."))
-   
-    
     @Get('signOut')
+
     async signOut(): Promise<{statusCode: Number, message: String }> {
         try {
             // TODO: blacklist jwt token 
