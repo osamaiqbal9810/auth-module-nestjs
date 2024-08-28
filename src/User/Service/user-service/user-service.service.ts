@@ -54,7 +54,7 @@ export class UserService {
         return this.find(async () => await this.prismaService.users.findFirst({ where: { id: id.toString(), isRemoved: false } }))
     }
 
-    async find(userRecord: () => Promise<User | null>): Promise<User | null> {
+    async find(userRecord: () => Promise<users | null>): Promise<User | null> {
         const user = await userRecord()
         if (!user) {
             return null
@@ -63,10 +63,11 @@ export class UserService {
             user.id,
             user.name,
             user.email,
-            user.roles, 
+            user.roles,
+            user.subscriptionPlan,
             user.isRemoved
         );
-        return userObj
+        return userObj as User
 
     }
 

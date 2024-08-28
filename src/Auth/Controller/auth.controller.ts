@@ -1,5 +1,5 @@
-import {  Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, UseGuards } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { SignInDto } from '../DTO/SignInDto';
 import { AuthService } from '../Service/auth.service';
 import { PasswordDto } from 'src/User/DTO/PasswordDto';
@@ -13,10 +13,14 @@ import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'src/Files/Global.constnats';
+import { JWTPayloadModel } from 'src/Payload.model';
+import { UserService } from 'src/User/Service/user-service/user-service.service';
+import { users } from '@prisma/client';
+
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+    constructor(private authService: AuthService, private userService: UserService) { }
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully!", {
         access_token: {
@@ -69,10 +73,10 @@ export class AuthController {
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logout success."))
     @Get('signOut')
 
-    async signOut(): Promise<{statusCode: Number, message: String }> {
+    async signOut(): Promise<{ statusCode: Number, message: String }> {
         try {
             // TODO: blacklist jwt token 
-        //    res.clearCookie('jwt') TODO://
+            //    res.clearCookie('jwt') TODO://
             // return res.status(200).json({ message: 'Signed out successfully' });
             return {
                 statusCode: 200,
@@ -88,7 +92,7 @@ export class AuthController {
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User doesn't exist"))
     @Post("/forgotPassword")
     @ApiBody({ type: PasswordDto })
-    async generatePasswordResetToken(@Request() req: Express.Request, @Body() passwordDto: PasswordDto): Promise<{statusCode: Number,message: String}> {
+    async generatePasswordResetToken(@Request() req: Express.Request, @Body() passwordDto: PasswordDto): Promise<{ statusCode: Number, message: String }> {
         try {
             const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
             let result = await this.authService.generatePasswordResetToken(passwordDto.email.toLowerCase(), serverUrl)
@@ -97,7 +101,7 @@ export class AuthController {
                     statusCode: 200,
                     message: "An email has been sent to you including password reset link, you can reset password using this link"
                 }
-            } 
+            }
             throw new NotFoundException("User not found and unable to send the password reset email")
 
         } catch (error) {
@@ -132,7 +136,7 @@ export class AuthController {
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: User }> {
+    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: users }> {
         try {
             let user = req['user'] as GoogleProfileTranslated
             if (user) {
@@ -147,12 +151,12 @@ export class AuthController {
                 //     secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
                 //     sameSite: 'strict', // Helps prevent CSRF attacks
                 // });
-             
+
                 return {
                     statusCode: 200,
                     message: "Logged in successfully",
                     access_token: result.access_token,
-                    user: result.user
+                    user: result.user as users
                 }
             }
             throw new NotFoundException("User not found")
@@ -160,6 +164,43 @@ export class AuthController {
             // If it's a known error type, rethrow it; otherwise, throw a generic server error
             if (error instanceof NotFoundException) {
                 throw error;
+            }
+            throw new InternalServerErrorException()
+        }
+    }
+
+    @Get("/whoAmI")
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, UserIdThrottleGuard)
+    @ApiTags("Auth")
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "User found", {
+        files: {
+            type: 'array',
+            items: { $ref: getSchemaPath(User) }
+        }
+    }))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to fetch user"))
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
+    @Throttle_Limit(10)
+    @Throttle_Ttl(6000)
+    async whoAmI(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, user: User }> {
+        try {
+            const userObj = request['user'] as JWTPayloadModel
+            if (userObj && userObj._id) {
+                const user = await this.userService.findOneById(userObj._id)
+                if (user) {
+                    return {
+                        statusCode: 200,
+                        message: "User found",
+                        user
+                    }
+                }
+                throw new BadRequestException("Failed to fetch user")
+            }
+            throw new NotFoundException("User doesn't exist in request")
+        } catch (err) {
+            if (err instanceof BadRequestException || err instanceof NotFoundException) {
+                throw err
             }
             throw new InternalServerErrorException()
         }
