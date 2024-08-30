@@ -76,6 +76,7 @@ export class UserController {
     @ApiTags("User")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Verification email sent"))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found", "user not found"))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "User already verified"))
     @ApiBody({ type: ResendVerificationCodeDto })
     @Post("/resendVerificationEmail")
 
@@ -84,6 +85,9 @@ export class UserController {
             const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
             let user = await this.userService.findOneByEmail(resendDto.email)
             if (user) {
+                if (user.isVerified) {
+                    throw new BadRequestException("User is already verified")
+                }
                 await this.userService.sendVerificationEmail(resendDto.email, serverUrl)
                 return {
                     statusCode: 200,
@@ -92,7 +96,7 @@ export class UserController {
             }
             throw new NotFoundException("User not found, unable to send verification code")
         } catch (err) {
-            if (err instanceof NotFoundException) {
+            if (err instanceof NotFoundException || err instanceof BadRequestException) {
                 throw err
             }
             throw new InternalServerErrorException()
