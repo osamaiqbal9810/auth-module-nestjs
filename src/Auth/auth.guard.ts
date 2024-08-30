@@ -35,7 +35,7 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
         }
         
         const user = await this.userService.findOneById(payload._id) 
-        if (!user || user.isRemoved) {
+        if (!user || user.isRemoved || !user.isVerified ) {
           throw new UnauthorizedException()
         }
         

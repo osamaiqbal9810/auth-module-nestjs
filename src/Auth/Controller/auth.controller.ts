@@ -18,11 +18,33 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
 import { users } from '@prisma/client';
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 import { ForgotPasswordDto } from 'src/User/DTO/ForgotPassword.dto';
+import { VerifyInAppUserDto } from '../DTO/VerifyEmail.dto';
 
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService, private userService: UserService) { }
+
+    @ApiTags("Auth")
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "In App User"))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "This email is associated with some gmail account. Continue using app through gmail login"))
+    @ApiBody({ type: UserSignInDto })
+    @Throttle({ default: { limit: 100, ttl: 60000 } })
+    @Post("/verifyUserSource")
+    async verifyInAppUser(@Body() verifyInAppUserDto: VerifyInAppUserDto): Promise<{statusCode: Number, message: String}> {
+        try {
+            await this.userService.verifyInAppUser(verifyInAppUserDto)
+            return {
+                statusCode: 200,
+                message: "Success: In-App user"
+            }
+        } catch(err) {
+            if (err instanceof BadRequestException || err instanceof NotFoundException) {
+                throw err
+            }
+            throw new InternalServerErrorException()
+        }
+    } 
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully!", {
         access_token: {
@@ -59,9 +81,9 @@ export class AuthController {
             }
         } catch (error) {
             // If it's a known error type, rethrow it; otherwise, throw a generic server error
-            if (error instanceof NotFoundException) {
+            if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
-            }
+            } 
             throw new InternalServerErrorException()
         }
     }

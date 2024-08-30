@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import * as bcrypt from 'bcrypt';
@@ -13,22 +13,30 @@ import { JWTPayloadModel } from 'src/Payload.model';
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 @Injectable()
 export class AuthService {
-    constructor(private prismaService: PrismaService, @Inject(forwardRef(() => UserService)) private userService: UserService,private jwtService: JwtService,private readonly mailService: MailerService) {}
+    constructor(private prismaService: PrismaService, @Inject(forwardRef(() => UserService)) private userService: UserService, private jwtService: JwtService, private readonly mailService: MailerService) { }
 
-    async signIn(signInDto: UserSignInDto): Promise<{access_token: String, user: User} | null> {
+    async signIn(signInDto: UserSignInDto): Promise<{ access_token: String, user: User } | null> {
         const existingUser = await this.prismaService.users.findFirst({
-            where: {email: signInDto.email.toLowerCase()},
-            include: {password: true}
+            where: {
+                email: signInDto.email.toLowerCase(),
+                isRemoved: false,
+                source: "in-app"
+            },
+            include: { password: true }
         })
-        
-        if (existingUser && existingUser.password) {
-             const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
-             if (isMatch == true) {
-                 const payload = { _id: existingUser.id.toString(), roles: existingUser.roles}
-               return { access_token: await this.generateJWT(payload), user: existingUser }
-             }
+
+        if (!existingUser?.isVerified) {
+            throw new BadRequestException("User is not verified. PLease verify email address then continue signing in.")
         }
-       return null
+
+        if (existingUser && existingUser.password) {
+            const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
+            if (isMatch == true) {
+                const payload = { _id: existingUser.id.toString(), roles: existingUser.roles }
+                return { access_token: await this.generateJWT(payload), user: existingUser }
+            }
+        }
+        return null
     }
 
     async generatePasswordResetToken(email: String, serverUrl: String): Promise<boolean> {
@@ -41,22 +49,24 @@ export class AuthService {
             return emailSent ? true : false
         }
         return false
-      }
+    }
 
-      async sendForgotPasswordEmail(user: User, token: String, expirationDate: Date, serverUrl: String): Promise<boolean> {
-       const resetUrl = `${serverUrl}/reset-password?token=${token}`;
-       // save token and token expiry in db to validate at time when user provide new password
-        let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate) 
-        if (!isTokenSaved) {
-            return false
-        }
+    async sendForgotPasswordEmail(user: User, token: String, expirationDate: Date, serverUrl: String): Promise<boolean> {
+        try {
+            const resetUrl = `${serverUrl}/reset-password?token=${token}`;
+            // save token and token expiry in db to validate at time when user provide new password
+            let isTokenSaved = await this.userService.saveResetTokenAndExpiry(user.id.toString(), token, expirationDate)
+            if (!isTokenSaved) {
+                return false
+            }
 
-        this.mailService.sendMail({
-          from: process.env.EMAIL_USERNAME,
-          to: user.email.toLowerCase().toString(),
-          subject: `Forgot Password`,
-          html: 
-          `<!DOCTYPE html>
+
+            this.mailService.sendMail({
+                from: process.env.EMAIL_USERNAME,
+                to: user.email.toLowerCase().toString(),
+                subject: `Forgot Password`,
+                html:
+                    `<!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">
@@ -75,16 +85,19 @@ export class AuthService {
 
             </body>
             </html>`
-        });
-        return true
+            });
+            return true
+        } catch (err) {
+            throw new InternalServerErrorException("Failed to send email")
+        }
     }
 
     async generateJWT(payload: JWTPayloadModel) {
-      return  await this.jwtService.signAsync(payload)
+        return await this.jwtService.signAsync(payload)
     }
 
-    async authGmailUser(userDto: UserSignUpDto): Promise<{access_token: String, user: users}> {
-     return await this.userService.createGmailUser(userDto)
+    async authGmailUser(userDto: UserSignUpDto): Promise<{ access_token: String, user: users }> {
+        return await this.userService.createGmailUser(userDto)
     }
 }
 

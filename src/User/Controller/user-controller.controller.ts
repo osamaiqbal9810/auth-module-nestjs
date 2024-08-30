@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, InternalServerErrorException, NotFoundException, Param, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { UserService } from '../Service/user-service/user-service.service';
 import { UserSignUpDto } from '../DTO/UserSignUp.dto';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiParam, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
@@ -10,6 +10,8 @@ import { Roles } from 'src/roles.decorator';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
+import Express from 'express';
+import { VerificationCodeDto } from '../DTO/VerificationCode.dto';
 
 @Controller('user')
 @SkipThrottle({ default: false })
@@ -19,22 +21,21 @@ export class UserController {
     @ApiTags("User")
     @ApiBody({ type: UserSignUpDto })
     @ApiExtraModels(User)
-
-    @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.", {
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.An verification email has been sent to your given email address", {
         user: {
             $ref: getSchemaPath(User),
         }
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to create user"))
     @Post()
-    
-    async createUser(@Body() dto: UserSignUpDto): Promise<{ statusCode: Number, message: String, user: User }> {
+    async createUser(@Request() req: Express.Request, @Body() dto: UserSignUpDto): Promise<{ statusCode: Number, message: String, user: User }> {
         try {
-            const user = await this.userService.createUser(dto)
+            const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+            const user = await this.userService.createUser(dto, serverUrl)
             if (user) {
                 return {
                     statusCode: 200,
-                    message: 'User has been created successfully',
+                    message: 'User has been created successfully.An verification email has been sent to your given email address',
                     user
                 };
             }
@@ -47,7 +48,27 @@ export class UserController {
             throw new InternalServerErrorException()
         }
     }
-
+    @ApiTags("User")
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "Email verification completed successfully"))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Verification code got expired. Please try again."))
+    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Invalid verification code"))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found", "user not found"))
+    @ApiBody({ type: VerificationCodeDto })
+    @Post("/validateCode")
+    async validateVerificationCode(@Body() verificationCodeDto: VerificationCodeDto): Promise<{ statusCode: Number, message: String}> {
+        try {
+           await this.userService.validateVerificationCode(verificationCodeDto)
+           return {
+            statusCode: 200,
+            message: 'Email verification completed successfully'
+        };
+        } catch (err) {
+            if (err instanceof BadRequestException || err instanceof NotFoundException) {
+                throw err
+            }
+            throw new InternalServerErrorException()
+        }
+    }
     // Find user by email
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)
