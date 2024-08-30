@@ -12,6 +12,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
 import Express from 'express';
 import { VerificationCodeDto } from '../DTO/VerificationCode.dto';
+import { ResendVerificationCodeDto } from '../DTO/ResendVerification.dto';
 
 @Controller('user')
 @SkipThrottle({ default: false })
@@ -48,6 +49,7 @@ export class UserController {
             throw new InternalServerErrorException()
         }
     }
+    // validate user verification code
     @ApiTags("User")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Email verification completed successfully"))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Verification code got expired. Please try again."))
@@ -55,13 +57,13 @@ export class UserController {
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found", "user not found"))
     @ApiBody({ type: VerificationCodeDto })
     @Post("/validateCode")
-    async validateVerificationCode(@Body() verificationCodeDto: VerificationCodeDto): Promise<{ statusCode: Number, message: String}> {
+    async validateVerificationCode(@Body() verificationCodeDto: VerificationCodeDto): Promise<{ statusCode: Number, message: String }> {
         try {
-           await this.userService.validateVerificationCode(verificationCodeDto)
-           return {
-            statusCode: 200,
-            message: 'Email verification completed successfully'
-        };
+            await this.userService.validateVerificationCode(verificationCodeDto)
+            return {
+                statusCode: 200,
+                message: 'Email verification completed successfully'
+            };
         } catch (err) {
             if (err instanceof BadRequestException || err instanceof NotFoundException) {
                 throw err
@@ -69,6 +71,34 @@ export class UserController {
             throw new InternalServerErrorException()
         }
     }
+
+    // Resend verification code
+    @ApiTags("User")
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "Verification email sent"))
+    @ApiNotFoundResponse(createApiResponseSchema(404, "Not Found", "user not found"))
+    @ApiBody({ type: ResendVerificationCodeDto })
+    @Post("/resendVerificationEmail")
+
+    async resendEmailVeriCode(@Request() req: Express.Request, @Body() resendDto: ResendVerificationCodeDto): Promise<{ statusCode: Number, message: String }> {
+        try {
+            const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+            let user = await this.userService.findOneByEmail(resendDto.email)
+            if (user) {
+                await this.userService.sendVerificationEmail(resendDto.email, serverUrl)
+                return {
+                    statusCode: 200,
+                    message: 'Verification email sent'
+                }
+            }
+            throw new NotFoundException("User not found, unable to send verification code")
+        } catch (err) {
+            if (err instanceof NotFoundException) {
+                throw err
+            }
+            throw new InternalServerErrorException()
+        }
+    }
+
     // Find user by email
     @ApiTags("User")
     @UseGuards(AuthGuard, RolesGuard)

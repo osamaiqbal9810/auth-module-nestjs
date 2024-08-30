@@ -22,7 +22,7 @@ export class UserService {
 
     async verifyInAppUser(inAppUserDto: VerifyInAppUserDto): Promise<void> {
        let user = await this.prismaService.users.findFirst({
-            where: {email: inAppUserDto.email}
+            where: {email: inAppUserDto.email, isRemoved: false}
         })
 
         if (!user) {
@@ -144,7 +144,8 @@ export class UserService {
                 verificationCode: user.verificationCode
             },
             data: {
-                isVerified: true
+                isVerified: true,
+                verificationCode: ""
             }
         })
         

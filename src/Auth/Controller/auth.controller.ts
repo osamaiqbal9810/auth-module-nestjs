@@ -28,7 +28,7 @@ export class AuthController {
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "In App User"))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "This email is associated with some gmail account. Continue using app through gmail login"))
-    @ApiBody({ type: UserSignInDto })
+    @ApiBody({ type: VerifyInAppUserDto })
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post("/verifyUserSource")
     async verifyInAppUser(@Body() verifyInAppUserDto: VerifyInAppUserDto): Promise<{statusCode: Number, message: String}> {
