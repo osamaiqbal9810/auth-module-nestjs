@@ -11,6 +11,8 @@ import * as path from 'path';
 import { FILE_UPLOAD_DIR } from './Files/Global.constnats';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ChatModule } from './chat/chat.module';
+import { LLMModule } from './LLM/llm.module';
 
 
 @Module({
@@ -34,7 +36,9 @@ import { APP_GUARD } from '@nestjs/core';
     ThrottlerModule.forRoot([{
       ttl: Number(process.env.THROTTLE_TTL),
       limit: Number(process.env.THROTTLE_REQUESTS_COUNT),
-  }])
+  }]),
+    ChatModule,
+    LLMModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, {

@@ -34,6 +34,10 @@ model files {
   user             users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   v                Int      @default(0) @map("__v")
   fileSize         BigInt
+  fileType         String
+  tags             String[]
+  totalPages       Int      @default(0)
+  totalChunks      Int      @default(0)
   isRemoved        Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -50,4 +54,47 @@ model userspasswords {
   isRemoved       Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+model ChatHistory {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  chatType        String
+  featured        Boolean     @default(false)
+  question        String
+  answer          String
+  model           String
+  referencesCount Int
+  references      Reference[]
+  files           File[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+type Reference {
+  fileName String
+  fileId   String @db.ObjectId
+  pageNo   Int
+}
+
+type File {
+  fileId     String       @db.ObjectId
+  fileName   String
+  fileType   String
+  totalPages Int          @default(1)
+  pageRanges PageRanges[]
+}
+
+type PageRanges {
+  startPageNo Int
+  endPageNo   Int
+}
+
+model LLMModels {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique-
+  apiKey    String
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

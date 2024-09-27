@@ -35,6 +35,7 @@ export class FileUtilsService {
   ) => {
     try {
       const fileExt = extname(file.originalname)
+      
       if (Object.values(AllowedFileTypes).includes(fileExt as AllowedFileTypes)) {
         // storage Quota implementation
         const user = await FileUtilsService.getUserFromRequest(req)
