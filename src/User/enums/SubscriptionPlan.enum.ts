@@ -3,7 +3,7 @@ import {
     PREMIUM_PLAN_FILES_SIZE_LIMIT, 
     STANDARD_PLAN_FILES_SIZE_LIMIT 
 } 
-from "src/Files/Global.constnats";
+from "Global.constnats";
 
 export enum SubscriptionPlan {
     Basic, // 100MB

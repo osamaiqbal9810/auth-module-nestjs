@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 
-export class FileDto {
+export class FileModel {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -49,7 +49,7 @@ export class FileDto {
   @Optional()
   tags?: string[]
 
-  constructor(fileDto?: Partial<FileDto>) {
+  constructor(fileDto?: Partial<FileModel>) {
     this.id = fileDto?.id ?? '';
     this.originalName = fileDto?.originalName ?? '';
     this.fileName = fileDto?.fileName ?? '';

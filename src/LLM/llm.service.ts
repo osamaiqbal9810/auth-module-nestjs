@@ -1,6 +1,7 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
-import { UpdateApiKeyDto } from "./DTO/UpdateApiKey.dto";
+import { UpdateLLMDto } from "./DTO/UpdateLLM.dto";
+import { LLMModels } from "@prisma/client";
 
 @Injectable()
 export class LLMService {
@@ -8,25 +9,30 @@ export class LLMService {
 
     async getModelApiKey(modelName: string): Promise<string> {
         let llmInfo = await this.prismaService.lLMModels.findFirst({
-            where: {name: modelName, isEnabled: true}
+            where: {model_name: modelName, enabled: true}
         })
         
         if (!llmInfo) {
             throw new NotFoundException("LLm not found")
         }
-        return llmInfo.apiKey
+        return llmInfo.api_key
     }
 
 
-    async updateApiKey(apiKeyDto: UpdateApiKeyDto): Promise<boolean> {
-        let updateApiKey = await this.prismaService.lLMModels.update({
-            where: { name: apiKeyDto.modelName },
-            data: {apiKey: apiKeyDto.apiKey, isEnabled: apiKeyDto.isEnabled?.valueOf() ?? true}
+    async updateLLM(apiKeyDto: UpdateLLMDto): Promise<boolean> {
+        let updatedLLM = await this.prismaService.lLMModels.update({
+            where: { model_id: apiKeyDto.modelId },
+            data: {api_key: apiKeyDto.apiKey, enabled: apiKeyDto.enabled, is_default: apiKeyDto.enabled}
         })
-        
-        if (!updateApiKey) {
-            throw new InternalServerErrorException("Failed to update Api Key")
-        }
-        return true
-    } 
+
+        return !updatedLLM ? false : true
+    }
+
+    async getAll(): Promise<LLMModels[]> {
+        return await this.prismaService.lLMModels.findMany({})
+    }
+
+    async getSupportedLLms(): Promise<LLMModels[]> {
+        return await this.prismaService.lLMModels.findMany({where: {enabled: true}})
+    }
 }

@@ -94,7 +94,6 @@ export class ChatController {
             throw new InternalServerErrorException();
         }
     }
-    
 
     @Get("/")
     @ApiTags("Chat")
@@ -106,6 +105,7 @@ export class ChatController {
           allOf: [
             {
               properties: {
+                statusCode:{type: 'number', example: 200},
                 chatHistory: {
                   type: 'array',
                   items: { $ref: getSchemaPath(ChatHistory) },

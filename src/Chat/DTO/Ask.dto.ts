@@ -32,7 +32,7 @@ export class AskDto {
     @IsInt()
     @IsOptional()
     @ApiProperty()
-    referencesCount?: number; // Use `?` to indicate it's optional
+    referencesCount: number; 
 
     @IsArray()
     @IsOptional() // Marking as optional since it might not be present

@@ -12,7 +12,7 @@ import Express from 'express';
 import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/throttleUser.guard';
-import { Throttle_Limit, Throttle_Ttl } from 'src/Files/Global.constnats';
+import { Throttle_Limit, Throttle_Ttl } from 'Global.constnats';
 import { JWTPayloadModel } from 'src/Payload.model';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 import { users } from '@prisma/client';
@@ -228,5 +228,4 @@ export class AuthController {
             throw new InternalServerErrorException()
         }
     }
-
 }

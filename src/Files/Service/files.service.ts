@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { FileDto } from "../DTO/file.dto";
+import { FileModel } from "../DTO/file.dto";
 import { PrismaService } from "src/prisma.service";
 import { files } from "@prisma/client";
 import * as fs from 'fs';
@@ -10,7 +10,7 @@ import { PageRanges } from "src/Chat/Model/ChatHistory.model";
 export class FilesService {
   constructor(private prismaService: PrismaService) { }
 
-  async saveUploadedFileInfo(fileDto: FileDto): Promise<files> {
+  async saveUploadedFileInfo(fileDto: FileModel): Promise<files> {
     return await this.prismaService.files.create({
       data: {
         originalFileName: fileDto.originalName,
@@ -24,13 +24,13 @@ export class FilesService {
     });
   }
 
-  async getAllFilesOfUser(id: String): Promise<FileDto[]> {
+  async getAllFilesOfUser(id: String): Promise<FileModel[]> {
     const files = await this.prismaService.files.findMany({
       where: { userId: id.valueOf(), isRemoved: false }
     });
 
     return files.map((file) => {
-      return new FileDto({
+      return new FileModel({
         id: file.id,
         originalName: file.originalFileName,
         fileName: file.newFileName,

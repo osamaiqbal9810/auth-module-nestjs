@@ -3,12 +3,12 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from "@nestjs/swagger";
 import { diskStorage } from "multer";
 import { extname, join } from "path";
-import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../Global.constnats";
+import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../../../Global.constnats";
 import { FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
-import { FileDto } from "../DTO/file.dto";
+import { FileModel } from "../DTO/file.dto";
 import { JWTPayloadModel } from "src/Payload.model";
 import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/Auth/auth.guard";
@@ -29,11 +29,11 @@ interface FileInfo {
 export class FileController {
   constructor(private readonly fileService: FilesService) { }
   @ApiTags("Files")
-  @ApiExtraModels(FileDto)
+  @ApiExtraModels(FileModel)
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {
     file:
     {
-      $ref: getSchemaPath(FileDto),
+      $ref: getSchemaPath(FileModel),
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to upload file"))
@@ -55,19 +55,18 @@ export class FileController {
     })
   )
 
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, fileInfo: FileDto }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, fileInfo: FileModel }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
       }
       const fileType = extname(file.originalname)
-      let fileDto = new FileDto()
+      let fileDto = new FileModel()
       fileDto.fileName = file.filename
       fileDto.originalName = file.originalname
       fileDto.path = `/${process.env.FILE_UPLOAD_DIR}/${file.filename}`
       fileDto.fileSize = file.size
       fileDto.fileType = fileType
-      fileDto.tags = ["Class 1", "English"]
 
       const user = request['user'] as JWTPayloadModel
       if (user && user._id) {
@@ -118,14 +117,14 @@ export class FileController {
   @ApiOkResponse(createApiResponseSchema(200, "Success", "Files fetched successfully", {
     files: {
       type: 'array',
-      items: { $ref: getSchemaPath(FileDto) }
+      items: { $ref: getSchemaPath(FileModel) }
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to fetch files"))
   @Throttle({ default: { limit: 1000, ttl: 60000 } })
   @Throttle_Limit(50)
   @Throttle_Ttl(6000)
-  async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, files: FileDto[] }> {
+  async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, files: FileModel[] }> {
     try {
       // TODO
       const user = request['user'] as JWTPayloadModel
