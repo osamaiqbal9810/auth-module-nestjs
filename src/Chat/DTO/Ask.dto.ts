@@ -1,18 +1,18 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, IsNotEmpty, IsInt, IsOptional, IsArray, IsBoolean } from "class-validator";
-import { PageRanges } from "../Model/ChatHistory.model";
+import { PageRange } from "../Model/ChatHistory.model";
 
-export class SelectedDocs {
+export class SelectedDoc {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
     fileId: string; // Use lowercase `string` instead of `String`
 
-    @ApiProperty({ type: [PageRanges] })
+    @ApiProperty({ type: [PageRange] })
     @IsArray()
-    pageRanges: PageRanges[];
+    pageRanges: PageRange[];
 
-    constructor(selectedDoc?: Partial<SelectedDocs>) {
+    constructor(selectedDoc?: Partial<SelectedDoc>) {
         this.fileId = selectedDoc?.fileId ?? "";
         this.pageRanges = selectedDoc?.pageRanges ?? [];
     }
@@ -36,8 +36,8 @@ export class AskDto {
 
     @IsArray()
     @IsOptional() // Marking as optional since it might not be present
-    @ApiProperty({ type: [SelectedDocs] })
-    selectedDocs?: SelectedDocs[];
+    @ApiProperty({ type: [SelectedDoc] })
+    selectedDocs?: SelectedDoc[];
 
     @ApiProperty({ type: [String] })
     @IsArray()
@@ -57,7 +57,7 @@ export class AskDto {
     @IsString()
     @IsOptional()
     @ApiProperty()
-    customApiKey?: string;
+    customApiKey?: string; //TODO: do we really need to store the user custom api key
 
     constructor(askDto?: Partial<AskDto>) {
         this.question = askDto?.question ?? '';

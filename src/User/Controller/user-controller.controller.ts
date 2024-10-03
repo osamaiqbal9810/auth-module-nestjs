@@ -6,7 +6,7 @@ import { User } from '../Schema/user.schema';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { RolesGuard } from '../roles.guard';
 import { Role } from '../enums/Role.enum';
-import { Roles } from 'src/roles.decorator';
+import { Roles } from 'src/User/roles.decorator';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';

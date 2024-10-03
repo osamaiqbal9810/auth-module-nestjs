@@ -7,7 +7,7 @@ import { UpdateLLMDto } from "./DTO/UpdateLLM.dto";
 import { LLMModels } from "@prisma/client";
 import { LLMModel } from "./DTO/LLM.model";
 import { RolesGuard } from "src/User/roles.guard";
-import { Roles } from "src/roles.decorator";
+import { Roles } from "src/User/roles.decorator";
 import { Role } from "src/User/enums/Role.enum";
 
 

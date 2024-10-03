@@ -1,17 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AskDto, SelectedDocs } from './DTO/Ask.dto';
+import { AskDto, SelectedDoc } from './DTO/Ask.dto';
 import { PrismaService } from 'src/prisma.service';
-import { QueryResponse } from './chat.controller';
+import { PythonQueryResponse } from './chat.controller';
 import { ChatFile } from './Model/ChatHistory.model';
 import { FilesService } from 'src/Files/Service/files.service';
 import { ChatHistory } from '@prisma/client';
-
+import { spawn } from 'child_process';
 @Injectable()
 export class ChatService {
 
     constructor(private prismaService: PrismaService, private fileService: FilesService) { }
 
-    async createChatHistory(ask: AskDto, userId: string, chatType: string, result: QueryResponse, files: SelectedDocs[]): Promise<ChatHistory> {
+    async createChatHistory(ask: AskDto, userId: string, chatType: string, result: PythonQueryResponse, files: SelectedDoc[]): Promise<ChatHistory> {
         const allFiles = await this.fileService.getAllFilesOfUser(userId);
 
         const chatFiles = files.reduce<ChatFile[]>((acc, selectedFile) => {
@@ -67,4 +67,54 @@ export class ChatService {
         }
         return true
     }
+
+    async get_query_response(user_id: String, fileInfo: SelectedDoc[], query: String, noOfReferences: Number, apiKey: String): Promise<PythonQueryResponse> {
+        const inputData = {
+          user_id,
+          fileInfo,
+          query,
+          noOfReferences,
+          apiKey
+        };
+    
+        try {
+          return new Promise((resolve, reject) => {
+            // Start the Python process
+            const pythonProcess = spawn('python', ['./src/Chat/processQuery.py']);
+    
+            // Write the input data to the Python script
+            pythonProcess.stdin.write(JSON.stringify(inputData));
+            pythonProcess.stdin.end(); // Close the stdin to signal that we're done sending data
+    
+            let output = '';
+    
+            // Listen for data coming from stdout
+            pythonProcess.stdout.on('data', (data) => {
+              output += data.toString(); // Accumulate the output data
+            });
+    
+            // Listen for errors from stderr
+            pythonProcess.stderr.on('data', (data) => {
+              console.error('Error:', data.toString());
+            });
+    
+            // When the process closes, resolve or reject the promise
+            pythonProcess.on('close', (code) => {
+              if (code !== 0) {
+                reject(new Error(`Python process exited with code ${code}`));
+              } else {
+                try {
+                  // Parse the output JSON
+                  resolve(JSON.parse(output));
+                } catch (error) {
+                  reject(error); // Handle parsing error
+                }
+              }
+            });
+          });
+        } catch (error) {
+          console.error('Error executing Python script:', error);
+          throw new Error('Failed to process file');
+        }
+      }
 }

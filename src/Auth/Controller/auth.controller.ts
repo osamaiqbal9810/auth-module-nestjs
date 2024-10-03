@@ -11,7 +11,7 @@ import { User } from 'src/User/Schema/user.schema';
 import Express from 'express';
 import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
-import { UserIdThrottleGuard } from 'src/throttleUser.guard';
+import { UserIdThrottleGuard } from 'src/User/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'Global.constnats';
 import { JWTPayloadModel } from 'src/JWTPayload.model';
 import { UserService } from 'src/User/Service/user-service/user-service.service';

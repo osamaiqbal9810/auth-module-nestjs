@@ -3,9 +3,9 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
 import { Files } from "@prisma/client";
 import * as fs from 'fs';
-import { SelectedDocs } from "src/Chat/DTO/Ask.dto";
+import { SelectedDoc } from "src/Chat/DTO/Ask.dto";
 import { spawn } from 'child_process';
-import { PageRanges } from "src/Chat/Model/ChatHistory.model";
+import { PageRange } from "src/Chat/Model/ChatHistory.model";
 import { FileModel } from "../DTO/file.dto";
 
 
@@ -55,16 +55,16 @@ export class FilesService {
     });
   }
 
-  async getFilesBasedOnTags(userId: string, tags: string[]): Promise<SelectedDocs[]> {
+  async getFilesBasedOnTags(userId: string, tags: string[]): Promise<SelectedDoc[]> {
     const userFiles = await this.getAllFilesOfUser(userId)
     if (userFiles) {
       const filesBasedOnTags = userFiles.filter((file) => 
         tags.some(tag => file.tags?.includes(tag))
       );
       return filesBasedOnTags.map((file) => {
-        return new SelectedDocs({
+        return new SelectedDoc({
           fileId: file.id,
-          pageRanges: [new PageRanges({startPageNo: 0, endPageNo: file.totalPages})]
+          pageRanges: [new PageRange({start: 0, end: file.totalPages})]
         })
       })
     }

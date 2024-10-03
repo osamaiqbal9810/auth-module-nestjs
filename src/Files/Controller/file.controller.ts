@@ -12,7 +12,7 @@ import { FileModel } from "../DTO/file.dto";
 import { JWTPayloadModel } from "src/JWTPayload.model";
 import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/Auth/auth.guard";
-import { UserIdThrottleGuard } from "src/throttleUser.guard";
+import { UserIdThrottleGuard } from "src/User/throttleUser.guard";
 import { UpdateFileTagsDto } from "../DTO/UpdateFileTags.dto";
 import { Files } from "@prisma/client";
 
@@ -119,7 +119,7 @@ export class FileController {
   @Throttle_Ttl(6000)
   async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, files: FileModel[] }> {
     try {
-      // TODO
+    
       const user = request['user'] as JWTPayloadModel
       if (user && user._id) {
         const files = await this.fileService.getAllFilesOfUser(user._id);

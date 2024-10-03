@@ -37,7 +37,7 @@ export class ChatHistory {
 
     @IsArray()
     @ApiProperty()
-    references: ChatReferences[];
+    references: ChatReference[];
   
     @IsArray()
     @ApiProperty()
@@ -73,19 +73,19 @@ export class ChatHistory {
   }
 
 
-export class PageRanges {
+export class PageRange {
   
   @ApiProperty()
   @IsInt()
-  startPageNo: number;
+  start: number;
 
   @ApiProperty()
   @IsInt()
-  endPageNo: number;
+  end: number;
 
-  constructor(pageRange?: Partial<PageRanges>) {
-    this.startPageNo = pageRange?.startPageNo ?? 0;
-    this.endPageNo = pageRange?.endPageNo ?? 0;
+  constructor(pageRange?: Partial<PageRange>) {
+    this.start = pageRange?.start ?? 0;
+    this.end = pageRange?.end ?? 0;
   }
 }
 
@@ -112,7 +112,7 @@ export class ChatFile {
 
   @IsArray()
   @ApiProperty()
-  pageRanges: PageRanges[];
+  pageRanges: PageRange[];
 
   constructor(file?: Partial<ChatFile>) {
     this.fileId = file?.fileId ?? '';
@@ -123,7 +123,7 @@ export class ChatFile {
   }
 }
 
-export class ChatReferences {
+export class ChatReference {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -138,7 +138,7 @@ export class ChatReferences {
   @ApiProperty()
   pageNo: number;
 
-  constructor(reference?: Partial<ChatReferences>) {
+  constructor(reference?: Partial<ChatReference>) {
     this.fileName = reference?.fileName ?? '';
     this.fileId = reference?.fileId ?? '';
     this.pageNo = reference?.pageNo ?? 0;

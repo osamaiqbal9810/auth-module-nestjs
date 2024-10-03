@@ -57,37 +57,37 @@ model UserPasswords {
 }
 
 model ChatHistory {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String       @db.ObjectId
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
   chatType        String
-  featured        Boolean      @default(false)
+  featured        Boolean     @default(false)
   question        String
   answer          String
   model           String
   referencesCount Int
-  references      References[]
+  references      Reference[]
   files           File[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
-type References {
+type Reference {
   fileName String
   fileId   String @db.ObjectId
   pageNo   Int
 }
 
 type File {
-  fileId     String       @db.ObjectId
+  fileId     String      @db.ObjectId
   fileName   String
   fileType   String
-  totalPages Int          @default(1)
-  pageRanges PageRanges[]
+  totalPages Int         @default(1)
+  pageRanges PageRange[]
 }
 
-type PageRanges {
-  startPageNo Int
-  endPageNo   Int
+type PageRange {
+  start Int
+  end   Int
 }
 
 model LLMModels {
