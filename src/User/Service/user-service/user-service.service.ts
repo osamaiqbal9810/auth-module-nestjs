@@ -7,7 +7,7 @@ import { Role } from 'src/User/enums/Role.enum';
 
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
 import { AuthService } from 'src/Auth/Service/auth.service';
-import { users } from '@prisma/client';
+import { Users } from '@prisma/client';
 import { validateOrReject } from 'class-validator';
 import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
 import { VerifyInAppUserDto } from 'src/Auth/DTO/VerifyEmail.dto';
@@ -54,7 +54,7 @@ export class UserService {
             let salt = await bcrypt.genSalt()
             let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
             // Step 2: Create the password entry for the user
-             await prisma.userspasswords.create({
+             await prisma.userPasswords.create({
                 data: {
                     hashedPassword: hashedPassword,
                     userId: user.id,
@@ -172,7 +172,7 @@ export class UserService {
         return this.find(async () => await this.prismaService.users.findFirst({ where: { id: id.toString(), isRemoved: false } }))
     }
 
-    async find(userRecord: () => Promise<users | null>): Promise<User | null> {
+    async find(userRecord: () => Promise<Users | null>): Promise<User | null> {
         const user = await userRecord()
         if (!user) {
             return null
@@ -209,7 +209,7 @@ export class UserService {
         const user = await this.getUserByEmailAndResetToken(passwordDto.email.toLowerCase(), token)
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(passwordDto.newPassword, salt)
-        const updatedPassword = await this.prismaService.userspasswords.update({
+        const updatedPassword = await this.prismaService.userPasswords.update({
             where: { userId: user.id.toString() },
             data: { hashedPassword: hashedPassword, resetToken: "", tokenExpiryDate: null }
         })
@@ -220,7 +220,7 @@ export class UserService {
     }
 
     async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
-        let userObj = await this.prismaService.userspasswords.findFirst({
+        let userObj = await this.prismaService.userPasswords.findFirst({
             where: { resetToken: token.toString(), user: { email: email.toString()} },
             include: { user: true },
         });
@@ -230,7 +230,7 @@ export class UserService {
 
         if (userObj.tokenExpiryDate && userObj.tokenExpiryDate < new Date()) {
             // invalidate reset token by deleting it from database
-            await this.prismaService.userspasswords.update({
+            await this.prismaService.userPasswords.update({
                 where: { userId: userObj.user.id.toString() },
                 data: { resetToken: "" }
             })
@@ -240,7 +240,7 @@ export class UserService {
     }
 
     async saveResetTokenAndExpiry(userId: String, token: String, tokenExpiryDate: Date): Promise<boolean> {
-        let result = await this.prismaService.userspasswords.update({
+        let result = await this.prismaService.userPasswords.update({
             where: { userId: userId.toString() },
             data: { resetToken: token.toString(), tokenExpiryDate: new Date(tokenExpiryDate) }
         })
@@ -252,7 +252,7 @@ export class UserService {
 
 
     // google log in
-    async createGmailUser(dto: UserSignUpDto): Promise<{ access_token: String, user: users }> {
+    async createGmailUser(dto: UserSignUpDto): Promise<{ access_token: String, user: Users }> {
         let existingUser = await this.findOneByEmail(dto.email)
         if (!existingUser) {
             const user = await this.prismaService.users.create({
@@ -270,7 +270,7 @@ export class UserService {
         }
         else {
             const payload = { _id: existingUser.id, roles: existingUser.roles }
-            return { access_token: await this.authService.generateJWT(payload), user: existingUser as users }
+            return { access_token: await this.authService.generateJWT(payload), user: existingUser as Users }
         }
 
     }

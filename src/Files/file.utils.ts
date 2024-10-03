@@ -6,6 +6,7 @@ import { BadRequestException, Injectable, NotAcceptableException } from '@nestjs
 import { randomUUID } from 'crypto';
 import { PrismaService } from 'src/prisma.service';
 import { planProperties, SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
+import { JWTPayloadModel } from 'src/JWTPayload.model';
 
 @Injectable()
 export class FileUtilsService {
@@ -64,7 +65,7 @@ export class FileUtilsService {
 
 
   static getUserFromRequest = async (request: Request) => {
-    const userObj = request['user'] as { _id: string; iat: number; exp: number };
+    const userObj = request['user'] as JWTPayloadModel
     if (!userObj || !userObj._id) {
       throw new BadRequestException({ message: "No user found. Invalid authorization token" });
     }
@@ -72,7 +73,7 @@ export class FileUtilsService {
     const userId = userObj._id
     const prismaService = FileUtilsHolder.getPrismaService();
     const user = await prismaService.users.findFirst({
-      where: { id: userId, isRemoved: false },
+      where: { id: userId.valueOf(), isRemoved: false },
       include: { files: true },
     });
 

@@ -1,16 +1,26 @@
 import { Injectable } from "@nestjs/common";
-import { FileModel } from "../DTO/file.dto";
+
 import { PrismaService } from "src/prisma.service";
-import { files } from "@prisma/client";
+import { Files } from "@prisma/client";
 import * as fs from 'fs';
 import { SelectedDocs } from "src/Chat/DTO/Ask.dto";
+import { spawn } from 'child_process';
 import { PageRanges } from "src/Chat/Model/ChatHistory.model";
+import { FileModel } from "../DTO/file.dto";
+
+
+// used to pass file info to python script while uploading file
+export interface PythonFileInfo {
+  file_id: String, 
+  file_path: String, 
+  file_format: String
+}
 
 @Injectable()
 export class FilesService {
   constructor(private prismaService: PrismaService) { }
 
-  async saveUploadedFileInfo(fileDto: FileModel): Promise<files> {
+  async saveUploadedFileInfo(fileDto: FileModel): Promise<Files> {
     return await this.prismaService.files.create({
       data: {
         originalFileName: fileDto.originalName,
@@ -89,13 +99,8 @@ export class FilesService {
     return true;
   }
 
-  async unlinkFileFromDirectory(fileName: String): Promise<boolean> {
+  async unlinkFileFromDirectory(filePath: string): Promise<boolean> {
     try {
-      const fileUploadDir = process.env.FILE_UPLOAD_DIR;
-      if (!fileUploadDir) {
-      throw new Error("FILE_UPLOAD_DIR environment variable is not defined.");
-      }
-      const filePath = `${process.cwd()}/${fileUploadDir}/${fileName}`
       await fs.promises.unlink(filePath);
       return true;
     } catch (error) {
@@ -103,17 +108,62 @@ export class FilesService {
     }
   }
 
-  async updateFileChunksAndPages(fileId: String, chunksAndPages: { chunks: Number, pages: Number }): Promise<boolean> {
-    const updatedFile = await this.prismaService.files.update({
+  async updateFileChunksAndPages(fileId: String, chunksAndPages: { chunks: Number, pages: Number }): Promise<Files> {
+    return await this.prismaService.files.update({
       where: { id: fileId.valueOf(), isRemoved: false },
       data: {
         totalChunks: chunksAndPages.chunks.valueOf(),
         totalPages: chunksAndPages.pages.valueOf()
       }
     })
-    if (!updatedFile) {
-      return false
-    }
-    return true
+   
   }
+
+  async get_file_chunks_and_pages(user_id: String, fileInfo: PythonFileInfo): Promise<{ chunks: number, pages: number }> {
+    const inputData = {
+      user_id,
+     fileInfo
+    };
+
+    try {
+      return new Promise((resolve, reject) => {
+        // Start the Python process
+        const pythonProcess = spawn('python', ['./src/Files/fileProcessing.py']);
+    
+        // Write the input data to the Python script
+        pythonProcess.stdin.write(JSON.stringify(inputData));
+        pythonProcess.stdin.end(); // Close the stdin to signal that we're done sending data
+    
+        let output = '';
+    
+        // Listen for data coming from stdout
+        pythonProcess.stdout.on('data', (data) => {
+          output += data.toString(); // Accumulate the output data
+        });
+    
+        // Listen for errors from stderr
+        pythonProcess.stderr.on('data', (data) => {
+          console.error('Error:', data.toString());
+        });
+    
+        // When the process closes, resolve or reject the promise
+        pythonProcess.on('close', (code) => {
+          if (code !== 0) {
+            reject(new Error(`Python process exited with code ${code}`));
+          } else {
+            try {
+              // Parse the output JSON
+              resolve(JSON.parse(output));
+            } catch (error) {
+              reject(error); // Handle parsing error
+            }
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error executing Python script:', error);
+      throw new Error('Failed to process file');
+    }
+  }
+  
 }

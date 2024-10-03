@@ -20,19 +20,18 @@ export class LLMController {
     @Roles(Role.Admin)
     @ApiBody({type: UpdateLLMDto})
     @ApiBearerAuth()
-    @ApiOkResponse(createApiResponseSchema(200, "LLM  updated successfully.", "gpt-3"))
+    @ApiOkResponse(createApiResponseSchema(200, "LLM  updated successfully.", ""))
     @Put("/")
-    async updateLLM(@Body() apiKeyDto: UpdateLLMDto): Promise<{statusCode: number, message: string, modelName: string}> {
+    async updateLLM(@Body() updatedLLM: UpdateLLMDto): Promise<{statusCode: number, message: string}> {
         try {
-            let isUpdated = await this.llmService.updateLLM(apiKeyDto)
+            let isUpdated = await this.llmService.updateLLM(updatedLLM)
             if (isUpdated) {
                 return {
                     statusCode: 200,
-                    message: "LLM updated successfully.",
-                    modelName: apiKeyDto.modelId
+                    message: "LLM updated successfully."
                 }
             }
-            throw new InternalServerErrorException("Failed to updated LLM")
+            throw new InternalServerErrorException("Failed to update LLM")
         } catch (error) {
             if (error instanceof InternalServerErrorException) {
                 throw error
@@ -52,7 +51,7 @@ export class LLMController {
             properties: {
                 statusCode:{type: 'number', example: 200},
                 message: { type: 'string', example: 'LLMs fetched successfully.' },
-                llms_list: {
+                llms: {
                     type: 'array',
                     items: { $ref: getSchemaPath(LLMModel) },
                 },
@@ -60,14 +59,14 @@ export class LLMController {
         },
     })
     @Get("/")
-    async getAllLLMModels(): Promise<{statusCode: number, message: string, llms_list: LLMModels[]}> {
+    async getAllLLMModels(): Promise<{statusCode: number, message: string, llms: LLMModels[]}> {
         try {
             let allLLMs = await this.llmService.getAll()
             if (allLLMs) {
                 return {
                     statusCode: 200,
                     message: "All LLMs fetched successfully.",
-                    llms_list: allLLMs
+                    llms: allLLMs
                 }
             }
             throw new InternalServerErrorException("Failed to fetch LLMs")
@@ -79,7 +78,7 @@ export class LLMController {
         }
     }
 
-    @Get('/getSupportedLlmOptions')
+    @Get('/displayOptions')
     @ApiExtraModels(LLMModel)
     @UseGuards(AuthGuard)
     @ApiBearerAuth()
@@ -87,27 +86,35 @@ export class LLMController {
         schema: {
             type: 'object',
             properties: {
-                statusCode:{type: 'number', example: 200},
-                message: { type: 'string', example: 'LLMs fetched successfully.' },
-                llms_list: {
+                statusCode: { type: 'number', example: 200 },
+                message: { type: 'string', example: 'LLM options fetched successfully.' },
+                llmOptions: {
                     type: 'array',
-                    items: { $ref: getSchemaPath(LLMModel) },
+                    items: {
+                        type: 'object',
+                        properties: {
+                            modelName: { type: 'string', example: 'GPT-3' },
+                            modelShort: { type: 'string', example: 'gpt3' },
+                            modelId: { type: 'string', example: 'gpt-1234' }
+                        }
+                    },
                 },
             },
         },
     })
+    
     @ApiTags("LLM")
-    async getSupportedLlmModels(): Promise<{statusCode: number, message: string, llms_list: LLMModels[]}> {
+    async getSupportedLlmModels(): Promise<{statusCode: number, message: string, llmOptions: Partial<LLMModels>[]}> {
         try {
-            let allLLMs = await this.llmService.getSupportedLLms()
-            if (allLLMs) {
+            let supportedLlms = await this.llmService.getSupportedLLms()
+            if (supportedLlms) {
                 return {
                     statusCode: 200,
-                    message: "Supported LLMs fetched successfully.",
-                    llms_list: allLLMs
+                    message: "LLM options fetched successfully.",
+                    llmOptions: supportedLlms
                 }
             }
-            throw new InternalServerErrorException("Failed to fetch LLMs")
+            throw new InternalServerErrorException("Failed to fetch LLM options")
         } catch (error) {
             if (error instanceof InternalServerErrorException) {
                 throw error

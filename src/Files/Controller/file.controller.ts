@@ -4,24 +4,18 @@ import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiOkRes
 import { diskStorage } from "multer";
 import { extname, join } from "path";
 import { FILE_SIZE, FILE_UPLOAD_DIR, Throttle_Limit, Throttle_Ttl } from "../../../Global.constnats";
-import { FilesService } from "../Service/files.service";
+import { PythonFileInfo, FilesService } from "../Service/files.service";
 import { FileUtilsService } from "../file.utils";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
 import { FileModel } from "../DTO/file.dto";
-import { JWTPayloadModel } from "src/Payload.model";
+import { JWTPayloadModel } from "src/JWTPayload.model";
 import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/Auth/auth.guard";
 import { UserIdThrottleGuard } from "src/throttleUser.guard";
-import { spawn } from 'child_process';
-import { FileTagsDto } from "../DTO/FileTags.dto";
+import { UpdateFileTagsDto } from "../DTO/UpdateFileTags.dto";
+import { Files } from "@prisma/client";
 
-// used to pass file info to python script while uploading file
-interface FileInfo {
-  file_id: String, 
-  file_path: String, 
-  file_format: String
-}
 
 
 @Controller('files')
@@ -40,7 +34,7 @@ export class FileController {
   @Throttle({ default: { limit: 1000, ttl: 60000 } })
   @Throttle_Limit(50)
   @Throttle_Ttl(6000)
-  @Post("/upload")
+  @Post("upload")
   @ApiBearerAuth()
   @UseInterceptors(
     FileInterceptor('file', {
@@ -55,16 +49,17 @@ export class FileController {
     })
   )
 
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, fileInfo: FileModel }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, file: Files }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
       }
       const fileType = extname(file.originalname)
+      var relativeFilePath = `${process.env.FILE_UPLOAD_DIR}/${file.filename}`
       let fileDto = new FileModel()
       fileDto.fileName = file.filename
       fileDto.originalName = file.originalname
-      fileDto.path = `/${process.env.FILE_UPLOAD_DIR}/${file.filename}`
+      fileDto.path = ""
       fileDto.fileSize = file.size
       fileDto.fileType = fileType
 
@@ -73,27 +68,25 @@ export class FileController {
         fileDto.userId = user._id.valueOf();
         const uploadedFile = await this.fileService.saveUploadedFileInfo(fileDto)
         if (uploadedFile) {
-          // TODO: Here call python method (user_id, (file_id,file_path, file_format)) -> (Number of Chunks, No. of Pages)
+        
           // uploadedFile.id, uploadedFile.filePath, fileType
-          let fileInfo: FileInfo = {
+          let fileInfo: PythonFileInfo = {
             file_id: uploadedFile.id,
-            file_path: uploadedFile.filePath,
+            file_path: relativeFilePath,
             file_format: uploadedFile.fileType
           }
-          let chunksAndPages = await this.get_file_chunks_and_pages(user._id, fileInfo)
+          let chunksAndPages = await this.fileService.get_file_chunks_and_pages(user._id, fileInfo)
           // update the number of chunks geenerated and totalNumber of pages of document (provided by python func)
           const updatedFile = await this.fileService.updateFileChunksAndPages(uploadedFile.id, chunksAndPages)
           if (updatedFile) {
             // delete the file once embedding and vectors gets generated
-            let deletedFile = await this.fileService.unlinkFileFromDirectory(uploadedFile.newFileName)
+            let deletedFile = await this.fileService.unlinkFileFromDirectory(`${process.cwd()}/${relativeFilePath}`)
             if (deletedFile) {
-              fileDto.id = uploadedFile.id
-              fileDto.totalChunks = chunksAndPages.chunks
-              fileDto.totalPages = chunksAndPages.pages
+            
               return {
                 statusCode: 200,
                 message: "File Uploaded & processed successfully",
-                fileInfo: fileDto
+                file: updatedFile
               }
             }
           } else {
@@ -182,9 +175,9 @@ export class FileController {
   }
 
   @ApiTags("Files")
-  @Put("/updateFileTag")
+  @Put("/fileTags")
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
-  @ApiBody({type: FileTagsDto})
+  @ApiBody({type: UpdateFileTagsDto})
   @ApiBearerAuth()
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Tag updated successfully.", {
     fileId: {
@@ -193,7 +186,7 @@ export class FileController {
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to update file tag"))
-  async updateFileTag(@Query('fileId') fileId: String, @Body() fileTag: FileTagsDto): Promise<{ statusCode: Number, message: String, fileId: String }> {
+  async updateFileTag(@Query('fileId') fileId: String, @Body() fileTag: UpdateFileTagsDto): Promise<{ statusCode: Number, message: String, fileId: String }> {
     try {
       const isTagUpdated = await this.fileService.updateFileTag(fileId, fileTag.fileTags)
       if (isTagUpdated) {
@@ -212,53 +205,5 @@ export class FileController {
     }
   }
 
-
-  // TODO: To be removed after python implementation
-  async get_file_chunks_and_pages(user_id: String, fileInfo: FileInfo): Promise<{ chunks: number, pages: number }> {
-    const inputData = {
-      user_id,
-     fileInfo
-    };
-
-    try {
-      return new Promise((resolve, reject) => {
-        // Start the Python process
-        const pythonProcess = spawn('python', ['./src/Files/fileProcessing.py']);
-    
-        // Write the input data to the Python script
-        pythonProcess.stdin.write(JSON.stringify(inputData));
-        pythonProcess.stdin.end(); // Close the stdin to signal that we're done sending data
-    
-        let output = '';
-    
-        // Listen for data coming from stdout
-        pythonProcess.stdout.on('data', (data) => {
-          output += data.toString(); // Accumulate the output data
-        });
-    
-        // Listen for errors from stderr
-        pythonProcess.stderr.on('data', (data) => {
-          console.error('Error:', data.toString());
-        });
-    
-        // When the process closes, resolve or reject the promise
-        pythonProcess.on('close', (code) => {
-          if (code !== 0) {
-            reject(new Error(`Python process exited with code ${code}`));
-          } else {
-            try {
-              // Parse the output JSON
-              resolve(JSON.parse(output));
-            } catch (error) {
-              reject(error); // Handle parsing error
-            }
-          }
-        });
-      });
-    } catch (error) {
-      console.error('Error executing Python script:', error);
-      throw new Error('Failed to process file');
-    }
-  }
 
 }

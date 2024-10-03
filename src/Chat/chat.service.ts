@@ -37,7 +37,7 @@ export class ChatService {
                 featured: false,
                 question: ask.question,
                 answer: result.answer,
-                model: ask.model,
+                model: ask.modelId,
                 referencesCount: ask.referencesCount ?? 0,
                 references: result.references,
                 files: chatFiles,

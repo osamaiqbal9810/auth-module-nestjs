@@ -13,12 +13,13 @@ import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'Global.constnats';
-import { JWTPayloadModel } from 'src/Payload.model';
+import { JWTPayloadModel } from 'src/JWTPayload.model';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
-import { users } from '@prisma/client';
+
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 import { ForgotPasswordDto } from 'src/User/DTO/ForgotPassword.dto';
 import { VerifyInAppUserDto } from '../DTO/VerifyEmail.dto';
+import { Users } from '@prisma/client';
 
 
 @Controller('auth')
@@ -160,7 +161,7 @@ export class AuthController {
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: users }> {
+    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: Users }> {
         try {
             let user = req['user'] as GoogleProfileTranslated
             if (user) {
@@ -180,7 +181,7 @@ export class AuthController {
                     statusCode: 200,
                     message: "Logged in successfully",
                     access_token: result.access_token,
-                    user: result.user as users
+                    user: result.user as Users
                 }
             }
             throw new NotFoundException("User not found")

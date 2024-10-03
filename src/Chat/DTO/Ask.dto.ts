@@ -27,7 +27,7 @@ export class AskDto {
     @IsString()
     @IsNotEmpty()
     @ApiProperty()
-    model: string;
+    modelId: string;
 
     @IsInt()
     @IsOptional()
@@ -61,7 +61,7 @@ export class AskDto {
 
     constructor(askDto?: Partial<AskDto>) {
         this.question = askDto?.question ?? '';
-        this.model = askDto?.model ?? '';
+        this.modelId = askDto?.modelId ?? '';
         this.referencesCount = askDto?.referencesCount ?? 0;
         this.selectedDocs = askDto?.selectedDocs;
         this.fileTags = askDto?.fileTags;

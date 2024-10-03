@@ -7,32 +7,39 @@ import { LLMModels } from "@prisma/client";
 export class LLMService {
     constructor(private prismaService: PrismaService) {}
 
-    async getModelApiKey(modelName: string): Promise<string> {
+    async getModelApiKey(modelId: string): Promise<string> {
         let llmInfo = await this.prismaService.lLMModels.findFirst({
-            where: {model_name: modelName, enabled: true}
+            where: {modelId: modelId, enabled: true}
         })
         
         if (!llmInfo) {
             throw new NotFoundException("LLm not found")
         }
-        return llmInfo.api_key
+        return llmInfo.apiKey
     }
 
-
-    async updateLLM(apiKeyDto: UpdateLLMDto): Promise<boolean> {
+// to be used only by Admin
+    async updateLLM(llmChangeObj: UpdateLLMDto): Promise<boolean> {
         let updatedLLM = await this.prismaService.lLMModels.update({
-            where: { model_id: apiKeyDto.modelId },
-            data: {api_key: apiKeyDto.apiKey, enabled: apiKeyDto.enabled, is_default: apiKeyDto.enabled}
+            where: { modelId: llmChangeObj.modelId },
+            data: {apiKey: llmChangeObj.apiKey, enabled: llmChangeObj.enabled}
         })
 
-        return !updatedLLM ? false : true
+        return updatedLLM ? true : false
     }
 
+    // to be used only by Admin
     async getAll(): Promise<LLMModels[]> {
         return await this.prismaService.lLMModels.findMany({})
     }
 
-    async getSupportedLLms(): Promise<LLMModels[]> {
-        return await this.prismaService.lLMModels.findMany({where: {enabled: true}})
+    async getSupportedLLms(): Promise<Partial<LLMModels>[]> {
+        return await this.prismaService.lLMModels.findMany({
+            select: {
+                modelId: true,
+                modelName: true,
+                modelShort: true
+            },
+            where: {enabled: true}})
     }
 }

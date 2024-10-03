@@ -2,10 +2,10 @@ import { BadRequestException, Body, Controller, Get, InternalServerErrorExceptio
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { AskDto, SelectedDocs } from './DTO/Ask.dto';
 import { AuthGuard } from 'src/Auth/auth.guard';
-import { JWTPayloadModel } from 'src/Payload.model';
+import { JWTPayloadModel } from 'src/JWTPayload.model';
 import { spawn } from 'child_process';
 import {  ChatHistory, ChatReferences, TokensUsed } from './Model/ChatHistory.model';
-import { LLMModel } from '../LLM/enums/LLMs.enum';
+import { LLMsEnum } from '../LLM/enums/LLMs.enum';
 import { ChatService } from './chat.service';
 import { ChatType } from './enum/chatType.enum';
 import { FilesService } from 'src/Files/Service/files.service';
@@ -50,11 +50,11 @@ export class ChatController {
             const referencesCount: number = askDto.referencesCount ?? 0;
             
             // Validate the model
-            if (!Object.values(LLMModel).includes(askDto.model as LLMModel)) {
+            if (!Object.values(LLMsEnum).includes(askDto.modelId as LLMsEnum)) {
                 throw new BadRequestException("Invalid LLM");
             }
           
-            let apiKey: string = await this.llmService.getModelApiKey(askDto.model)
+            let apiKey: string = await this.llmService.getModelApiKey(askDto.modelId)
             if (askDto.useCustomApiKey && askDto.customApiKey) {
                 apiKey = askDto.customApiKey
             }

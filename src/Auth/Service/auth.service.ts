@@ -8,8 +8,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { User } from 'src/User/Schema/user.schema';
 import { PrismaService } from 'src/prisma.service';
 import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
-import { users } from '@prisma/client';
-import { JWTPayloadModel } from 'src/Payload.model';
+import { Users } from '@prisma/client';
+import { JWTPayloadModel } from 'src/JWTPayload.model';
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 @Injectable()
 export class AuthService {
@@ -96,7 +96,7 @@ export class AuthService {
         return await this.jwtService.signAsync(payload)
     }
 
-    async authGmailUser(userDto: UserSignUpDto): Promise<{ access_token: String, user: users }> {
+    async authGmailUser(userDto: UserSignUpDto): Promise<{ access_token: String, user: Users }> {
         return await this.userService.createGmailUser(userDto)
     }
 }

@@ -37,7 +37,7 @@ export class FileModel {
   @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  fileSize: number;
+  fileSize: number; // no of bytes
 
   @IsNumber()
   totalPages: number;

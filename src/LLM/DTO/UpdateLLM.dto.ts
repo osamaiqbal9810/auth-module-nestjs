@@ -17,15 +17,9 @@ export class UpdateLLMDto {
     @IsBoolean()
     enabled: boolean;
 
-    @ApiProperty()
-    @IsBoolean()
-    isDefault: boolean;
-
-
-    constructor(modelId: string, apiKey: string, enabled: boolean, isDefault: boolean) {
+    constructor(modelId: string, apiKey: string, enabled: boolean) {
         this.modelId = modelId;
         this.apiKey = apiKey;
         this.enabled = enabled;
-        this.isDefault = isDefault;
     }
 }

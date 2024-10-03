@@ -7,31 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model users {
-  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
-  v                  Int             @default(0) @map("__v")
-  email              String          @unique(map: "email")
+model Users {
+  id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+  v                  Int            @default(0) @map("__v")
+  email              String         @unique(map: "email")
   name               String
   roles              String[]
-  source             String          @default("in-app")
-  isVerified         Boolean         @default(false)
-  password           userspasswords?
-  files              files[]
+  source             String         @default("in-app")
+  isVerified         Boolean        @default(false)
+  password           UserPasswords?
   subscriptionPlan   String
-  isRemoved          Boolean         @default(false)
+  isRemoved          Boolean        @default(false)
   verificationCode   String?
   verificationExpiry DateTime?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  files              Files[]
 }
 
-model files {
+model Files {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   originalFileName String
   newFileName      String
   filePath         String
   userId           String   @db.ObjectId
-  user             users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user             Users    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   v                Int      @default(0) @map("__v")
   fileSize         BigInt
   fileType         String
@@ -43,35 +43,35 @@ model files {
   updatedAt        DateTime @updatedAt
 }
 
-model userspasswords {
+model UserPasswords {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   v               Int       @default(0) @map("__v")
   hashedPassword  String
   resetToken      String?
   tokenExpiryDate DateTime?
   userId          String    @unique() @db.ObjectId
-  user            users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user            Users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   isRemoved       Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
 
 model ChatHistory {
-  id              String      @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String      @db.ObjectId
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String       @db.ObjectId
   chatType        String
-  featured        Boolean     @default(false)
+  featured        Boolean      @default(false)
   question        String
   answer          String
   model           String
   referencesCount Int
-  references      Reference[]
+  references      References[]
   files           File[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }
 
-type Reference {
+type References {
   fileName String
   fileId   String @db.ObjectId
   pageNo   Int
@@ -91,14 +91,13 @@ type PageRanges {
 }
 
 model LLMModels {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  model_name  String   @unique
-  model_id    String   @unique
-  api_key     String
-  model_short String
-  vendor      String
-  enabled     Boolean  @default(true)
-  is_default  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  modelName  String   @unique
+  modelId    String   @unique
+  apiKey     String
+  modelShort String
+  vendor     String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
