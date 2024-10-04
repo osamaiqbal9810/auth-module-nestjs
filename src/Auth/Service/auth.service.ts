@@ -6,10 +6,10 @@ import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { MailerService } from '@nestjs-modules/mailer';
 import { User } from 'src/User/Schema/user.schema';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
 import { Users } from '@prisma/client';
-import { JWTPayloadModel } from 'src/JWTPayload.model';
+import { JWTPayloadModel } from '../../User/JWTPayload.model';
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 @Injectable()
 export class AuthService {

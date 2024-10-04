@@ -5,7 +5,7 @@ import { UsersModule } from "src/User/Users.module";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
-import { PrismaService } from "src/prisma.service";
+import { PrismaService } from "../../prisma/prisma.service";
 import { GoogleStrategy } from "src/Auth/Strategies/google.strategy";
 
 

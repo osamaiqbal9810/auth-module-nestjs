@@ -2,7 +2,7 @@ import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErro
 import { UserSignUpDto } from 'src/User/DTO/UserSignUp.dto';
 import { User } from 'src/User/Schema/user.schema';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
 import { Role } from 'src/User/enums/Role.enum';
 
 import { SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';

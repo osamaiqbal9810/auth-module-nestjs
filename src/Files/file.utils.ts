@@ -4,9 +4,9 @@ import { extname } from 'path';
 import { AllowedFileTypes } from './file-types.enum';
 import { BadRequestException, Injectable, NotAcceptableException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { planProperties, SubscriptionPlan } from 'src/User/enums/SubscriptionPlan.enum';
-import { JWTPayloadModel } from 'src/JWTPayload.model';
+import { JWTPayloadModel } from '../User/JWTPayload.model';
 
 @Injectable()
 export class FileUtilsService {

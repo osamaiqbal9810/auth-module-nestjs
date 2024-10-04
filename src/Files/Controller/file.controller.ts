@@ -9,7 +9,7 @@ import { FileUtilsService } from "../file.utils";
 import { DeleteFileDto } from "../DTO/DeleteFile.dto";
 import { createApiResponseSchema } from "src/ErrorResponse.utils";
 import { FileModel } from "../DTO/file.dto";
-import { JWTPayloadModel } from "src/JWTPayload.model";
+import { JWTPayloadModel } from "../../User/JWTPayload.model";
 import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/Auth/auth.guard";
 import { UserIdThrottleGuard } from "src/User/throttleUser.guard";

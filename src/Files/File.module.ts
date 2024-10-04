@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { FilesService } from "./Service/files.service";
-import { PrismaService } from "src/prisma.service";
+import { PrismaService } from "../../prisma/prisma.service";
 import { FileController } from "./Controller/file.controller";
 import { UserService } from "src/User/Service/user-service/user-service.service";
 import { FileUtilsService } from "./file.utils";

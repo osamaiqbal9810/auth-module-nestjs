@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 
-import { PrismaService } from "src/prisma.service";
+import { PrismaService } from "../../../prisma/prisma.service";
 import { Files } from "@prisma/client";
 import * as fs from 'fs';
 import { SelectedDoc } from "src/Chat/DTO/Ask.dto";

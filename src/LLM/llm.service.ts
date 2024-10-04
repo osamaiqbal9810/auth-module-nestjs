@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "src/prisma.service";
+import { PrismaService } from "../../prisma/prisma.service";
 import { UpdateLLMDto } from "./DTO/UpdateLLM.dto";
 import { LLMModels } from "@prisma/client";
 

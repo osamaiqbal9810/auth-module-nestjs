@@ -13,7 +13,7 @@ import { GoogleProfileTranslated } from '../Strategies/google.strategy';
 import { Throttle } from '@nestjs/throttler';
 import { UserIdThrottleGuard } from 'src/User/throttleUser.guard';
 import { Throttle_Limit, Throttle_Ttl } from 'Global.constnats';
-import { JWTPayloadModel } from 'src/JWTPayload.model';
+import { JWTPayloadModel } from '../../User/JWTPayload.model';
 import { UserService } from 'src/User/Service/user-service/user-service.service';
 
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
