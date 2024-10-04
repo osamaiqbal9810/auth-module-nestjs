@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AskDto, SelectedDoc } from './DTO/Ask.dto';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 import { ChatFile, ChatReference, TokensUsed } from './Model/ChatHistory.model';
 import { FilesService } from 'src/Files/Service/files.service';

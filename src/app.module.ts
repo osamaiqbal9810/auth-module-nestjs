@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './User/Users.module';
 import { AuthModule } from './Auth/Auth.module';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { FileModule } from './Files/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';

@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, InternalServerErrorExceptio
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiOkResponse, ApiQuery, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { AskDto, SelectedDoc } from './DTO/Ask.dto';
 import { AuthGuard } from 'src/Auth/auth.guard';
-import { JWTPayloadModel } from 'src/JWTPayload.model';
+import { JWTPayloadModel } from '../User/JWTPayload.model';
 import { ChatHistory } from './Model/ChatHistory.model';
 import { LLMsEnum } from '../LLM/enums/LLMs.enum';
 import { ChatService } from './chat.service';
