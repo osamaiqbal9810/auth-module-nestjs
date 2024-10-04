@@ -152,11 +152,11 @@ export class LLMController {
             if (defaultLLM) {
                 return {
                     statusCode: 200,
-                    message: "LLM options fetched successfully.",
+                    message: "Default LLM option fetched successfully.",
                     data: defaultLLM
                 }
             }
-            throw new InternalServerErrorException("Failed to fetch LLM options")
+            throw new InternalServerErrorException("Failed to fetch default LLM option")
         } catch (error) {
             if (error instanceof InternalServerErrorException) {
                 throw error
