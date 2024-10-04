@@ -3,7 +3,7 @@ import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiOkRes
 import { AskDto, SelectedDoc } from './DTO/Ask.dto';
 import { AuthGuard } from 'src/Auth/auth.guard';
 import { JWTPayloadModel } from 'src/JWTPayload.model';
-import { ChatHistory, ChatReference, TokensUsed } from './Model/ChatHistory.model';
+import { ChatHistory } from './Model/ChatHistory.model';
 import { LLMsEnum } from '../LLM/enums/LLMs.enum';
 import { ChatService } from './chat.service';
 import { ChatType } from './enum/chatType.enum';
@@ -11,13 +11,6 @@ import { FilesService } from 'src/Files/Service/files.service';
 import { ChatHistory as ChatHistoryPrisma } from '@prisma/client';
 import { createApiResponseSchema } from 'src/ErrorResponse.utils';
 import { LLMService } from 'src/LLM/llm.service';
-
-export type PythonQueryResponse = {
-  answer: string,
-  references: ChatReference[],
-  tokensUsed: TokensUsed
-}
-
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService, private readonly fileService: FilesService, private llmService: LLMService) { }

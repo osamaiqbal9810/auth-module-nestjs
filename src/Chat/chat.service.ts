@@ -1,11 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AskDto, SelectedDoc } from './DTO/Ask.dto';
 import { PrismaService } from 'src/prisma.service';
-import { PythonQueryResponse } from './chat.controller';
-import { ChatFile } from './Model/ChatHistory.model';
+
+import { ChatFile, ChatReference, TokensUsed } from './Model/ChatHistory.model';
 import { FilesService } from 'src/Files/Service/files.service';
 import { ChatHistory } from '@prisma/client';
 import { spawn } from 'child_process';
+
+type PythonQueryResponse = {
+    answer: string,
+    references: ChatReference[],
+    tokensUsed: TokensUsed
+  }
+  
 @Injectable()
 export class ChatService {
 
