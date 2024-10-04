@@ -51,7 +51,7 @@ export class LLMController {
             properties: {
                 statusCode:{type: 'number', example: 200},
                 message: { type: 'string', example: 'LLMs fetched successfully.' },
-                llms: {
+                data: {
                     type: 'array',
                     items: { $ref: getSchemaPath(LLMModel) },
                 },
@@ -59,14 +59,14 @@ export class LLMController {
         },
     })
     @Get("/")
-    async getAllLLMModels(): Promise<{statusCode: number, message: string, llms: LLMModels[]}> {
+    async getAllLLMModels(): Promise<{statusCode: number, message: string, data: LLMModels[]}> {
         try {
             let allLLMs = await this.llmService.getAll()
             if (allLLMs) {
                 return {
                     statusCode: 200,
                     message: "All LLMs fetched successfully.",
-                    llms: allLLMs
+                    data: allLLMs
                 }
             }
             throw new InternalServerErrorException("Failed to fetch LLMs")
@@ -88,7 +88,7 @@ export class LLMController {
             properties: {
                 statusCode: { type: 'number', example: 200 },
                 message: { type: 'string', example: 'LLM options fetched successfully.' },
-                llmOptions: {
+                data: {
                     type: 'array',
                     items: {
                         type: 'object',
@@ -104,14 +104,14 @@ export class LLMController {
     })
     
     @ApiTags("LLM")
-    async getSupportedLlmModels(): Promise<{statusCode: number, message: string, llmOptions: Partial<LLMModels>[]}> {
+    async getSupportedLlmModels(): Promise<{statusCode: number, message: string, data: Partial<LLMModels>[]}> {
         try {
             let supportedLlms = await this.llmService.getSupportedLLms()
             if (supportedLlms) {
                 return {
                     statusCode: 200,
                     message: "LLM options fetched successfully.",
-                    llmOptions: supportedLlms
+                    data: supportedLlms
                 }
             }
             throw new InternalServerErrorException("Failed to fetch LLM options")

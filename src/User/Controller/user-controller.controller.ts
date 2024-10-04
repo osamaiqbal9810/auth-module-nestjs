@@ -23,13 +23,13 @@ export class UserController {
     @ApiBody({ type: UserSignUpDto })
     @ApiExtraModels(User)
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.An verification email has been sent to your given email address", {
-        user: {
+        data: {
             $ref: getSchemaPath(User),
         }
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to create user"))
     @Post()
-    async createUser(@Request() req: Express.Request, @Body() dto: UserSignUpDto): Promise<{ statusCode: Number, message: String, user: User }> {
+    async createUser(@Request() req: Express.Request, @Body() dto: UserSignUpDto): Promise<{ statusCode: Number, message: String, data: User }> {
         try {
             const serverUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
             const user = await this.userService.createUser(dto, serverUrl)
@@ -37,7 +37,7 @@ export class UserController {
                 return {
                     statusCode: 200,
                     message: 'User has been created successfully.An verification email has been sent to your given email address',
-                    user
+                    data: user
                 };
             }
             throw new BadRequestException("Failed to create user")
@@ -108,7 +108,7 @@ export class UserController {
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User Found", {
-        user: {
+        data: {
             $ref: getSchemaPath(User),
         }
     }))
@@ -117,7 +117,7 @@ export class UserController {
     @ApiQuery({ name: 'email', type: String })
     @Get()
     @Roles(Role.Admin)
-    async findOne(@Query('email') email: String): Promise<{ message: String, user: User }> {
+    async findOne(@Query('email') email: String): Promise<{ message: String, data: User }> {
         return this.findUser(() => this.userService.findOneByEmail(email), email);
     }
 
@@ -126,7 +126,7 @@ export class UserController {
     @UseGuards(AuthGuard, RolesGuard)
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User found", {
-        user: {
+        data: {
             $ref: getSchemaPath(User),
         }
     }))
@@ -135,19 +135,19 @@ export class UserController {
     @ApiParam({ name: 'id', type: String })
     @Get("/:id")
     @Roles(Role.Admin)
-    async findOneById(@Param('id') id: String): Promise<{ message: String, user: User }> {
+    async findOneById(@Param('id') id: String): Promise<{ message: String, data: User }> {
         return this.findUser(() => this.userService.findOneById(id), id);
     }
 
     // Common method to handle both by email and by ID
-    private async findUser(user: () => Promise<User | null>, identifier: String): Promise<{ statusCode: Number, message: String, user: User }> {
+    private async findUser(user: () => Promise<User | null>, identifier: String): Promise<{ statusCode: Number, message: String, data: User }> {
         try {
             const existingUser = await user();
             if (existingUser) {
                 return {
                     statusCode: 200,
                     message: "User found!",
-                    user: existingUser,
+                    data: existingUser,
                 };
             }
             throw new NotFoundException(`User with identifier ${identifier} doesn't exist!`)
@@ -164,7 +164,7 @@ export class UserController {
     @UseGuards(RolesGuard)
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User deleted Successfully", {
-        userId: {
+        data: {
             type: 'string',
             example: "0fe4902384902932932b36"
         }
@@ -174,7 +174,7 @@ export class UserController {
     @Delete()
     @Roles(Role.Admin)
 
-    async delete(@Query('email') email: string): Promise<{ statusCode: Number, message: String, userId: String }> {
+    async delete(@Query('email') email: string): Promise<{ statusCode: Number, message: String, data: String }> {
         return await this.deleteUser(() => this.userService.deleteUser(email))
     }
 
@@ -184,7 +184,7 @@ export class UserController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(Role.Admin)
     @ApiOkResponse(createApiResponseSchema(200, "Successs", "User deleted Successfully", {
-        userId: {
+        data: {
             type: 'string',
             example: "049023849029329323"
         }
@@ -194,18 +194,18 @@ export class UserController {
     @ApiParam({ type: String, name: 'id' })
     @Delete("/:id")
 
-    async deleteUserById(@Param('id') id: string): Promise<{ statusCode: Number, message: String, userId: String }> {
+    async deleteUserById(@Param('id') id: string): Promise<{ statusCode: Number, message: String, data: String }> {
         return await this.deleteUser(() => this.userService.deleteUserById(id))
     }
 
-    async deleteUser(user: () => Promise<User>): Promise<{ statusCode: Number, message: String, userId: String }> {
+    async deleteUser(user: () => Promise<User>): Promise<{ statusCode: Number, message: String, data: String }> {
         try {
             let deletedUser = await user();
             if (deletedUser) {
                 return {
                     statusCode: 200,
                     message: "User deleted successfully",
-                    userId: deletedUser.id
+                    data: deletedUser.id
                 }
             }
             throw new NotFoundException("User not found")
@@ -218,11 +218,7 @@ export class UserController {
     }
 
     @ApiTags("User")
-    @ApiOkResponse(createApiResponseSchema(200, "Success", "Password updated successfully", {
-        user: {
-            $ref: getSchemaPath(User),
-        }
-    }))
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "Password updated successfully", {}))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Password update failed. Reset token may got expired or User may not exist"))
     @Post("/reset-password")
     @ApiQuery({ name: 'reset-token', type: String })

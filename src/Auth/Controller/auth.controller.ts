@@ -29,7 +29,7 @@ export class AuthController {
         access_token: {
             type: 'string',
             example: "ey7yrgbu7yr4ir982y2i9yr92u90399"
-        }, user: {
+        }, data: {
             $ref: getSchemaPath(User),
         }
     }))
@@ -37,7 +37,7 @@ export class AuthController {
     @ApiBody({ type: UserSignInDto })
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post("/signIn")
-    async signIn(@Body() signInDto: UserSignInDto): Promise<{ statusCode: Number, message: String, access_token: String, user: User }> {
+    async signIn(@Body() signInDto: UserSignInDto): Promise<{ statusCode: Number, message: String, access_token: String, data: User }> {
 
         try {
             const result = await this.authService.signIn(signInDto)
@@ -53,7 +53,7 @@ export class AuthController {
                     statusCode: 200,
                     message: "Logged in successfully!",
                     access_token: result.access_token,
-                    user: result.user
+                    data: result.user
                 }
             }
             else {
@@ -134,13 +134,13 @@ export class AuthController {
             type: 'string',
             example: 'g7fgufh83yh893ytgh93yhg9g8y93'
         },
-        user: {
+        data: {
             $ref: getSchemaPath(User)
         }
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, user: Users }> {
+    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, data: Users }> {
         try {
             let user = req['user'] as GoogleProfileTranslated
             if (user) {
@@ -161,7 +161,7 @@ export class AuthController {
                         statusCode: 200,
                         message: "Logged in successfully",
                         access_token: result.access_token,
-                        user: result.user as Users
+                        data: result.user as Users
                     }
                 } else {
                     if (existingUser.source == "in-app") {
@@ -172,7 +172,7 @@ export class AuthController {
                         statusCode: 200,
                         message: "Logged in successfully",
                         access_token: await this.authService.generateJWT(payload),
-                        user: existingUser as Users
+                        data: existingUser as Users
                     }
                 }
             }
@@ -192,14 +192,14 @@ export class AuthController {
     @ApiTags("Auth")
 
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User found", {
-        user: { $ref: getSchemaPath(User) }
+        data: { $ref: getSchemaPath(User) }
 
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to fetch user"))
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Throttle_Limit(10)
     @Throttle_Ttl(6000)
-    async whoAmI(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, user: User }> {
+    async whoAmI(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, data: User }> {
         try {
             const userObj = request['user'] as JWTPayloadModel
             if (userObj && userObj._id) {
@@ -208,7 +208,7 @@ export class AuthController {
                     return {
                         statusCode: 200,
                         message: "User found",
-                        user
+                        data: user
                     }
                 }
                 throw new BadRequestException("Failed to fetch user")

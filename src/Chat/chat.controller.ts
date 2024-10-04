@@ -20,14 +20,14 @@ export class ChatController {
   @UseGuards(AuthGuard)
   @Post("/ask")
   @ApiOkResponse(createApiResponseSchema(200, "Success", "Response generated and saved successfully.", {
-    fileId: {
+    data: {
       type: 'string',
       example: '8d9384398743749347397b'
     }
   }))
 
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Invalid LLM"))
-  async handle_ask(@Body() askDto: AskDto, @Request() request: Express.Request): Promise<{ statusCode: number, message: string, answer: string }> {
+  async handle_ask(@Body() askDto: AskDto, @Request() request: Express.Request): Promise<{ statusCode: number, message: string, data: string }> {
     try {
 
       const user = request['user'] as JWTPayloadModel;
@@ -73,7 +73,7 @@ export class ChatController {
         return {
           statusCode: 200,
           message: "Response generated and saved successfully",
-          answer: result.answer
+          data: result.answer
         };
       }
       throw new InternalServerErrorException() // TODO: //need to discuss
@@ -96,7 +96,7 @@ export class ChatController {
         {
           properties: {
             statusCode: { type: 'number', example: 200 },
-            chatHistory: {
+            data: {
               type: 'array',
               items: { $ref: getSchemaPath(ChatHistory) },
             },
@@ -107,7 +107,7 @@ export class ChatController {
     description: "Chats fetched successfully",
   })
 
-  async getChatHistory(@Request() request: Express.Request): Promise<{ statusCode: number, message: string, chatHistory: ChatHistoryPrisma[] }> {
+  async getChatHistory(@Request() request: Express.Request): Promise<{ statusCode: number, message: string, data: ChatHistoryPrisma[] }> {
     try {
       const user = request['user'] as JWTPayloadModel;
 
@@ -117,7 +117,7 @@ export class ChatController {
       return {
         statusCode: 200,
         message: "Chats fetched successfully",
-        chatHistory: chatHistory
+        data: chatHistory
       }
 
     } catch (error) {
@@ -134,13 +134,13 @@ export class ChatController {
   @ApiBearerAuth()
   @ApiQuery({ name: 'chatId', type: String })
   @ApiOkResponse(createApiResponseSchema(200, "Success", "Chat featured successfully", {
-    chatId: {
+    data: {
       type: 'string',
       example: '8d9384398743749347397b'
     }
   }))
 
-  async featureChat(@Request() request: Express.Request, @Query('chatId') chatId: string): Promise<{ statusCode: number, message: string, chatId: string }> {
+  async featureChat(@Request() request: Express.Request, @Query('chatId') chatId: string): Promise<{ statusCode: number, message: string, data: string }> {
     try {
       const user = request['user'] as JWTPayloadModel;
      
@@ -150,7 +150,7 @@ export class ChatController {
         return {
           statusCode: 200,
           message: "Chat featured successfully",
-          chatId: chatId
+          data: chatId
         }
       }
       throw new InternalServerErrorException()

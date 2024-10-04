@@ -25,7 +25,7 @@ export class FileController {
   @ApiTags("Files")
   @ApiExtraModels(FileModel)
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Uploaded successfully", {
-    file:
+    data:
     {
       $ref: getSchemaPath(FileModel),
     }
@@ -49,7 +49,7 @@ export class FileController {
     })
   )
 
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, file: Files }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, data: Files }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
@@ -86,7 +86,7 @@ export class FileController {
               return {
                 statusCode: 200,
                 message: "File Uploaded & processed successfully",
-                file: updatedFile
+                data: updatedFile
               }
             }
           } else {
@@ -108,7 +108,7 @@ export class FileController {
   @ApiTags("Files")
   @ApiBearerAuth()
   @ApiOkResponse(createApiResponseSchema(200, "Success", "Files fetched successfully", {
-    files: {
+    data: {
       type: 'array',
       items: { $ref: getSchemaPath(FileModel) }
     }
@@ -117,7 +117,7 @@ export class FileController {
   @Throttle({ default: { limit: 1000, ttl: 60000 } })
   @Throttle_Limit(50)
   @Throttle_Ttl(6000)
-  async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, files: FileModel[] }> {
+  async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, data: FileModel[] }> {
     try {
     
       const user = request['user'] as JWTPayloadModel
@@ -127,7 +127,7 @@ export class FileController {
           return {
             statusCode: 200,
             message: "Files fetching success",
-            files
+            data: files
           }
         }
         throw new BadRequestException("Failed to fetch files")
@@ -145,7 +145,7 @@ export class FileController {
   @ApiTags("Files")
   @ApiBearerAuth()
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File deleted successfully.", {
-    fileId: {
+    data: {
       type: 'string',
       example: '8d9384398743749347397b'
     }
@@ -155,14 +155,14 @@ export class FileController {
   @Throttle_Limit(50)
   @Throttle_Ttl(6000)
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
-  async delete(@Query('fileId') fileId: String): Promise<{ statusCode: Number, message: String, fileId: String }> {
+  async delete(@Query('fileId') fileId: String): Promise<{ statusCode: Number, message: String, data: String }> {
     try {
       const isDeleted = await this.fileService.deleteFile(fileId)
       if (isDeleted) {
         return {
           statusCode: 200,
           message: "File deleted successfully.",
-          fileId: fileId
+          data: fileId
         }
       }
       throw new BadRequestException("Failed to delete file")
@@ -180,20 +180,20 @@ export class FileController {
   @ApiBody({type: UpdateFileTagsDto})
   @ApiBearerAuth()
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Tag updated successfully.", {
-    fileId: {
+    data: {
       type: 'string',
       example: '8d9384398743749347397b'
     }
   }))
   @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to update file tag"))
-  async updateFileTag(@Query('fileId') fileId: String, @Body() fileTag: UpdateFileTagsDto): Promise<{ statusCode: Number, message: String, fileId: String }> {
+  async updateFileTag(@Query('fileId') fileId: String, @Body() fileTag: UpdateFileTagsDto): Promise<{ statusCode: Number, message: String, data: String }> {
     try {
       const isTagUpdated = await this.fileService.updateFileTag(fileId, fileTag.fileTags)
       if (isTagUpdated) {
         return {
           statusCode: 200,
           message: "File Tag updated successfully.",
-          fileId: fileId
+          data: fileId
         }
       }
       throw new BadRequestException("Failed to update file tag")
