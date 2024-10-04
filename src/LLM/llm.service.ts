@@ -42,4 +42,14 @@ export class LLMService {
             },
             where: {enabled: true}})
     }
+
+    async getDefaultLLm(): Promise<Partial<LLMModels> | null> {
+        return await this.prismaService.lLMModels.findFirst({
+            select: {
+                modelId: true,
+                modelName: true,
+                modelShort: true
+            },
+            where: { modelId: "default", enabled: true}})
+    }
 }

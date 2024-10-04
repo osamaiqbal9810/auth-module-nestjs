@@ -122,4 +122,46 @@ export class LLMController {
             throw new InternalServerErrorException()
         }
     }
+
+    @Get('/defaultLLm')
+    @ApiExtraModels(LLMModel)
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth()
+    @ApiOkResponse({
+        schema: {
+            type: 'object',
+            properties: {
+                statusCode: { type: 'number', example: 200 },
+                message: { type: 'string', example: 'Default LLM fetched successfully.' },
+                data: {
+                    type: 'object',
+                    properties: {
+                        modelName: { type: 'string', example: 'GPT-3' },
+                        modelShort: { type: 'string', example: 'gpt3' },
+                        modelId: { type: 'string', example: 'gpt-1234' }
+                    }
+                },
+            },
+        },
+    })
+    
+    @ApiTags("LLM")
+    async getDefaultLlmModel(): Promise<{statusCode: number, message: string, data: Partial<LLMModels>}> {
+        try {
+            let defaultLLM = await this.llmService.getDefaultLLm()
+            if (defaultLLM) {
+                return {
+                    statusCode: 200,
+                    message: "LLM options fetched successfully.",
+                    data: defaultLLM
+                }
+            }
+            throw new InternalServerErrorException("Failed to fetch LLM options")
+        } catch (error) {
+            if (error instanceof InternalServerErrorException) {
+                throw error
+            }
+            throw new InternalServerErrorException()
+        }
+    }
 }
