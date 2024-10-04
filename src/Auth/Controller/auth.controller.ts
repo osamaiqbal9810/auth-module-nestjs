@@ -18,34 +18,12 @@ import { UserService } from 'src/User/Service/user-service/user-service.service'
 
 import { UserSignInDto } from '../DTO/UserSignIn.dto';
 import { ForgotPasswordDto } from 'src/User/DTO/ForgotPassword.dto';
-import { VerifyInAppUserDto } from '../DTO/VerifyEmail.dto';
 import { Users } from '@prisma/client';
-
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService, private userService: UserService) { }
 
-    @ApiTags("Auth")
-    @ApiOkResponse(createApiResponseSchema(200, "Success", "In App User"))
-    @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "This email is associated with some gmail account. Continue using app through gmail login"))
-    @ApiBody({ type: VerifyInAppUserDto })
-    @Throttle({ default: { limit: 100, ttl: 60000 } })
-    @Post("/verifyUserSource")
-    async verifyInAppUser(@Body() verifyInAppUserDto: VerifyInAppUserDto): Promise<{statusCode: Number, message: String}> {
-        try {
-            await this.userService.verifyInAppUser(verifyInAppUserDto)
-            return {
-                statusCode: 200,
-                message: "Success: In-App user"
-            }
-        } catch(err) {
-            if (err instanceof BadRequestException || err instanceof NotFoundException) {
-                throw err
-            }
-            throw new InternalServerErrorException()
-        }
-    } 
     @ApiTags("Auth")
     @ApiOkResponse(createApiResponseSchema(200, "Success", "Logged in successfully!", {
         access_token: {
@@ -59,7 +37,7 @@ export class AuthController {
     @ApiBody({ type: UserSignInDto })
     @Throttle({ default: { limit: 100, ttl: 60000 } })
     @Post("/signIn")
-    async signIn(@Body() signInDto: UserSignInDto): Promise<{ message: String, access_token: String, user: User }> {
+    async signIn(@Body() signInDto: UserSignInDto): Promise<{ statusCode: Number, message: String, access_token: String, user: User }> {
 
         try {
             const result = await this.authService.signIn(signInDto)
@@ -72,6 +50,7 @@ export class AuthController {
                 // });
 
                 return {
+                    statusCode: 200,
                     message: "Logged in successfully!",
                     access_token: result.access_token,
                     user: result.user
@@ -84,7 +63,7 @@ export class AuthController {
             // If it's a known error type, rethrow it; otherwise, throw a generic server error
             if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
-            } 
+            }
             throw new InternalServerErrorException()
         }
     }
@@ -168,26 +147,39 @@ export class AuthController {
                 const userDto = new UserSignUpDto()
                 userDto.name = user.name
                 userDto.email = user.email
+                let existingUser = await this.userService.findOneByEmail(user.email)
+                if (!existingUser) {
+                    const result = await this.authService.authGmailUser(userDto)
+                    //TODO://
+                    // res.cookie('access_token', token.access_token, {
+                    //     httpOnly: true,
+                    //     secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
+                    //     sameSite: 'strict', // Helps prevent CSRF attacks
+                    // });
 
-                const result = await this.authService.authGmailUser(userDto)
-                //TODO://
-                // res.cookie('access_token', token.access_token, {
-                //     httpOnly: true,
-                //     secure: process.env.NODE_ENV === 'production', // Use true if using HTTPS
-                //     sameSite: 'strict', // Helps prevent CSRF attacks
-                // });
-
-                return {
-                    statusCode: 200,
-                    message: "Logged in successfully",
-                    access_token: result.access_token,
-                    user: result.user as Users
+                    return {
+                        statusCode: 200,
+                        message: "Logged in successfully",
+                        access_token: result.access_token,
+                        user: result.user as Users
+                    }
+                } else {
+                    if (existingUser.source == "in-app") {
+                        throw new BadRequestException(`This email is associated with some in-app based account. Continue using app through in-app login`)
+                    }
+                    const payload = { _id: existingUser.id, roles: existingUser.roles }
+                    return {
+                        statusCode: 200,
+                        message: "Logged in successfully",
+                        access_token: await this.authService.generateJWT(payload),
+                        user: existingUser as Users
+                    }
                 }
             }
             throw new NotFoundException("User not found")
         } catch (error) {
             // If it's a known error type, rethrow it; otherwise, throw a generic server error
-            if (error instanceof NotFoundException) {
+            if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
             }
             throw new InternalServerErrorException()
@@ -198,10 +190,10 @@ export class AuthController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, UserIdThrottleGuard)
     @ApiTags("Auth")
-   
+
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User found", {
         user: { $ref: getSchemaPath(User) }
-        
+
     }))
     @ApiBadRequestResponse(createApiResponseSchema(400, "Bad Request", "Failed to fetch user"))
     @Throttle({ default: { limit: 100, ttl: 60000 } })

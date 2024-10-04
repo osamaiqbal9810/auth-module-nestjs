@@ -20,7 +20,6 @@ export class AuthService {
             where: {
                 email: signInDto.email.toLowerCase(),
                 isRemoved: false,
-                source: "in-app"
             },
             include: { password: true }
         })
@@ -28,7 +27,9 @@ export class AuthService {
         if (!existingUser?.isVerified) {
             throw new BadRequestException("User is not verified. PLease verify email address then continue signing in.")
         }
-
+        if (existingUser?.source == "google") {
+            throw new BadRequestException(`This email is associated with some gmail based account. Continue using app through gmail login`)
+        }
         if (existingUser && existingUser.password) {
             const isMatch = await bcrypt.compare(signInDto.password, existingUser.password.hashedPassword.toString());
             if (isMatch == true) {

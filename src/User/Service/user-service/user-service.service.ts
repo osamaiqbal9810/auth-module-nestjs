@@ -10,7 +10,6 @@ import { AuthService } from 'src/Auth/Service/auth.service';
 import { Users } from '@prisma/client';
 import { validateOrReject } from 'class-validator';
 import { ResetPasswordDto } from 'src/Auth/DTO/ResetPassword.dto';
-import { VerifyInAppUserDto } from 'src/Auth/DTO/VerifyEmail.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { VerificationCodeDto } from 'src/User/DTO/VerificationCode.dto';
 
@@ -20,21 +19,6 @@ import { VerificationCodeDto } from 'src/User/DTO/VerificationCode.dto';
 export class UserService {
     constructor(private prismaService: PrismaService, @Inject(forwardRef(() => AuthService)) private authService: AuthService, private readonly mailService: MailerService) { }
 
-    async verifyInAppUser(inAppUserDto: VerifyInAppUserDto): Promise<void> {
-       let user = await this.prismaService.users.findFirst({
-            where: {email: inAppUserDto.email, isRemoved: false}
-        })
-
-        if (!user) {
-            throw new NotFoundException("User with this email doesn't exist")
-        }
-        if (!user.isVerified) {
-            throw new BadRequestException("User email is not verified, please verify address and continue log in")
-        }
-        if (user.source == "google") {
-            throw new BadRequestException(`This email is associated with some gmail based account. Continue using app through gmail login`)
-        }
-    }
 
     async createUser(dto: UserSignUpDto, serverUrl: String): Promise<User> {
         await validateOrReject(dto);
@@ -54,13 +38,13 @@ export class UserService {
             let salt = await bcrypt.genSalt()
             let hashedPassword = await bcrypt.hash(dto.password.toString(), salt)
             // Step 2: Create the password entry for the user
-             await prisma.userPasswords.create({
+            await prisma.userPasswords.create({
                 data: {
                     hashedPassword: hashedPassword,
                     userId: user.id,
                 },
             });
-            return user 
+            return user
         })
         // handle verification email
         let isEmailSent = await this.sendVerificationEmail(dto.email.toLowerCase().toString(), serverUrl)
@@ -76,18 +60,18 @@ export class UserService {
         const expirationDate = new Date();
         expirationDate.setMinutes(expirationDate.getMinutes() + 5)
         // save verificationCode in db to validate at time when user verify email
-         let isCodeSaved = await this.saveVerificationCode(email, verificationCode, expirationDate) 
-         if (!isCodeSaved) {
-             return false
-         }
-         
- 
-         this.mailService.sendMail({
-           from: process.env.EMAIL_USERNAME,
-           to: email.toString(),
-           subject: `Verify Email address`,
-           html: 
-           `<!DOCTYPE html>
+        let isCodeSaved = await this.saveVerificationCode(email, verificationCode, expirationDate)
+        if (!isCodeSaved) {
+            return false
+        }
+
+
+        this.mailService.sendMail({
+            from: process.env.EMAIL_USERNAME,
+            to: email.toString(),
+            subject: `Verify Email address`,
+            html:
+                `<!DOCTYPE html>
              <html>
              <head>
                  <meta charset="UTF-8">
@@ -106,9 +90,9 @@ export class UserService {
  
              </body>
              </html>`
-         });
-         return true
-    } 
+        });
+        return true
+    }
 
     async validateVerificationCode(verificationCodeDto: VerificationCodeDto): Promise<void> {
         let user = await this.prismaService.users.findFirst({
@@ -123,7 +107,7 @@ export class UserService {
         if (!user) {
             throw new NotFoundException("user not found")
         }
-        
+
         if (user.verificationExpiry && user.verificationExpiry < new Date()) {
             await this.prismaService.users.update({
                 where: { id: user.id.toString() },
@@ -133,9 +117,9 @@ export class UserService {
         }
 
         if (user.verificationCode != verificationCodeDto.verificationCode) {
-            throw new BadRequestException("Invalid verification code") 
+            throw new BadRequestException("Invalid verification code")
         }
-       let updateUser = await this.prismaService.users.update({
+        let updateUser = await this.prismaService.users.update({
             where: {
                 email: verificationCodeDto.email.toString(),
                 isRemoved: false,
@@ -148,7 +132,7 @@ export class UserService {
                 verificationCode: ""
             }
         })
-        
+
         if (!updateUser) {
             throw new InternalServerErrorException()
         }
@@ -157,7 +141,7 @@ export class UserService {
     async saveVerificationCode(email: String, verificationCode: String, expirationDate: Date): Promise<boolean> {
         let result = await this.prismaService.users.update({
             where: { email: email.toString() },
-            data: { verificationCode: verificationCode.toString() ,verificationExpiry: new Date(expirationDate) }
+            data: { verificationCode: verificationCode.toString(), verificationExpiry: new Date(expirationDate) }
         })
         if (!result) {
             throw new InternalServerErrorException()
@@ -221,7 +205,7 @@ export class UserService {
 
     async getUserByEmailAndResetToken(email: String, token: String): Promise<User> {
         let userObj = await this.prismaService.userPasswords.findFirst({
-            where: { resetToken: token.toString(), user: { email: email.toString()} },
+            where: { resetToken: token.toString(), user: { email: email.toString() } },
             include: { user: true },
         });
         if (!userObj || !userObj.user) {
@@ -253,25 +237,20 @@ export class UserService {
 
     // google log in
     async createGmailUser(dto: UserSignUpDto): Promise<{ access_token: String, user: Users }> {
-        let existingUser = await this.findOneByEmail(dto.email)
-        if (!existingUser) {
-            const user = await this.prismaService.users.create({
-                data: {
-                    name: dto.name.toString(),
-                    email: dto.email.toLowerCase().toString(),
-                    isVerified: true,
-                    source: "google",
-                    roles: [Role[Role.User]],
-                    subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
-                },
-            });
-            const payload = { _id: user.id.toString(), roles: user.roles }
-            return { access_token: await this.authService.generateJWT(payload), user: user }
-        }
-        else {
-            const payload = { _id: existingUser.id, roles: existingUser.roles }
-            return { access_token: await this.authService.generateJWT(payload), user: existingUser as Users }
-        }
+        const user = await this.prismaService.users.create({
+            data: {
+                name: dto.name.toString(),
+                email: dto.email.toLowerCase().toString(),
+                isVerified: true,
+                source: "google",
+                roles: [Role[Role.User]],
+                subscriptionPlan: SubscriptionPlan[SubscriptionPlan.Basic],
+            },
+        });
+        // TODO: implement enum for source
+        const payload = { _id: user.id.toString(), roles: user.roles }
+        return { access_token: await this.authService.generateJWT(payload), user: user }
+
 
     }
 
