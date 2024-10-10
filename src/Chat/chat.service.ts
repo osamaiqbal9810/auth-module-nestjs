@@ -88,7 +88,7 @@ export class ChatService {
           return new Promise((resolve, reject) => {
             // Start the Python process
             const pythonProcess = spawn('python', ['./src/Chat/processQuery.py']);
-    
+    //  const pythonProcess = spawn('python', ['../../MilvusServer-main/p2_search_and_queryLLM.py']);
             // Write the input data to the Python script
             pythonProcess.stdin.write(JSON.stringify(inputData));
             pythonProcess.stdin.end(); // Close the stdin to signal that we're done sending data

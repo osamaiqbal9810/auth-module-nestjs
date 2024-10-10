@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, InternalServerErrorException, NotFoundException, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiExtraModels, ApiNotFoundResponse, ApiOkResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
 
 import { AuthService } from '../Service/auth.service';
@@ -140,7 +140,7 @@ export class AuthController {
     }))
     @ApiNotFoundResponse(createApiResponseSchema(404, "Not found", "User not found"))
     @UseGuards(GoogleOauthGuard)
-    async googleAuthCallback(@Req() req: Express.Request): Promise<{ statusCode: Number, message: String, access_token: String, data: Users }> {
+    async googleAuthCallback(@Req() req: Express.Request, @Res() res: Express.Response) {
         try {
             let user = req['user'] as GoogleProfileTranslated
             if (user) {
@@ -150,6 +150,7 @@ export class AuthController {
                 let existingUser = await this.userService.findOneByEmail(user.email)
                 if (!existingUser) {
                     const result = await this.authService.authGmailUser(userDto)
+                    console.log(user)
                     //TODO://
                     // res.cookie('access_token', token.access_token, {
                     //     httpOnly: true,
@@ -157,23 +158,27 @@ export class AuthController {
                     //     sameSite: 'strict', // Helps prevent CSRF attacks
                     // });
 
-                    return {
+                    let response = {
                         statusCode: 200,
                         message: "Logged in successfully",
                         access_token: result.access_token,
                         data: result.user as Users
                     }
+
+                    return res.redirect(`http://localhost:3001/auth/google/callback?response=${encodeURIComponent(JSON.stringify(response))}`);
                 } else {
                     if (existingUser.source == "in-app") {
                         throw new BadRequestException(`This email is associated with some in-app based account. Continue using app through in-app login`)
                     }
                     const payload = { _id: existingUser.id, roles: existingUser.roles }
-                    return {
+                    let response = {
                         statusCode: 200,
                         message: "Logged in successfully",
                         access_token: await this.authService.generateJWT(payload),
                         data: existingUser as Users
                     }
+                
+                 return res.redirect(`http://localhost:3001/auth/google/callback?response=${encodeURIComponent(JSON.stringify(response))}`);
                 }
             }
             throw new NotFoundException("User not found")

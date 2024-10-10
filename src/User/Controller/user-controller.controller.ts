@@ -22,7 +22,7 @@ export class UserController {
     @ApiTags("User")
     @ApiBody({ type: UserSignUpDto })
     @ApiExtraModels(User)
-    @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully.An verification email has been sent to your given email address", {
+    @ApiOkResponse(createApiResponseSchema(200, "Success", "User has been created successfully. An verification email has been sent to your given email address", {
         data: {
             $ref: getSchemaPath(User),
         }
@@ -36,7 +36,7 @@ export class UserController {
             if (user) {
                 return {
                     statusCode: 200,
-                    message: 'User has been created successfully.An verification email has been sent to your given email address',
+                    message: 'User has been created successfully. A verification email has been sent to your given email address.',
                     data: user
                 };
             }
@@ -88,15 +88,18 @@ export class UserController {
                 if (user.isVerified) {
                     throw new BadRequestException("User is already verified")
                 }
-                await this.userService.sendVerificationEmail(resendDto.email, serverUrl)
-                return {
-                    statusCode: 200,
-                    message: 'Verification email sent'
+                let isEmailSent = await this.userService.sendVerificationEmail(resendDto.email, serverUrl)
+                if (isEmailSent) {
+                    return {
+                        statusCode: 200,
+                        message: 'Verification email sent'
+                    }
                 }
+                throw new InternalServerErrorException("Failed to send verification email")
             }
             throw new NotFoundException("User not found, unable to send verification code")
         } catch (err) {
-            if (err instanceof NotFoundException || err instanceof BadRequestException) {
+            if (err instanceof NotFoundException || err instanceof BadRequestException || err instanceof InternalServerErrorException) {
                 throw err
             }
             throw new InternalServerErrorException()
@@ -161,7 +164,7 @@ export class UserController {
 
     // delete user by email
     @ApiTags("User")
-    @UseGuards(RolesGuard)
+    @UseGuards(AuthGuard,RolesGuard)
     @ApiBearerAuth()
     @ApiOkResponse(createApiResponseSchema(200, "Success", "User deleted Successfully", {
         data: {

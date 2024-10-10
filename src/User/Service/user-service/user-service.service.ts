@@ -100,12 +100,16 @@ export class UserService {
                 email: verificationCodeDto.email.toString(),
                 isRemoved: false,
                 source: "in-app",
-                isVerified: false
+                // isVerified: false   // no need to enforce it. can be removed
             }
         })
 
         if (!user) {
-            throw new NotFoundException("user not found")
+            throw new NotFoundException("User not found")
+        }
+
+        if (user.isVerified) {
+            return// already verified
         }
 
         if (user.verificationExpiry && user.verificationExpiry < new Date()) {

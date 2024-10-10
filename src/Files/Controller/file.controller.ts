@@ -14,8 +14,7 @@ import { Throttle } from "@nestjs/throttler";
 import { AuthGuard } from "src/Auth/auth.guard";
 import { UserIdThrottleGuard } from "src/User/throttleUser.guard";
 import { UpdateFileTagsDto } from "../DTO/UpdateFileTags.dto";
-import { Files } from "@prisma/client";
-
+import { EvaluateFilesDto, EvaluationResponse } from "../DTO/EvaluateFiles.dto";
 
 
 @Controller('files')
@@ -49,11 +48,12 @@ export class FileController {
     })
   )
 
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String, data: Files }> {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Request() request: Express.Request): Promise<{ statusCode: Number, message: String }> {
     try {
       if (!file) {
         throw new BadRequestException('No file uploaded');
       }
+
       const fileType = extname(file.originalname)
       var relativeFilePath = `${process.env.FILE_UPLOAD_DIR}/${file.filename}`
       let fileDto = new FileModel()
@@ -68,11 +68,11 @@ export class FileController {
         fileDto.userId = user._id.valueOf();
         const uploadedFile = await this.fileService.saveUploadedFileInfo(fileDto)
         if (uploadedFile) {
-        
+
           // uploadedFile.id, uploadedFile.filePath, fileType
           let fileInfo: PythonFileInfo = {
             file_id: uploadedFile.id,
-            file_path: relativeFilePath,
+            file_path: `${process.cwd()}/${relativeFilePath}`,
             file_format: uploadedFile.fileType
           }
           let chunksAndPages = await this.fileService.get_file_chunks_and_pages(user._id, fileInfo)
@@ -80,13 +80,13 @@ export class FileController {
           const updatedFile = await this.fileService.updateFileChunksAndPages(uploadedFile.id, chunksAndPages)
           if (updatedFile) {
             // delete the file once embedding and vectors gets generated
-            let deletedFile = await this.fileService.unlinkFileFromDirectory(`${process.cwd()}/${relativeFilePath}`)
+            let deletedFile = await this.fileService.unlinkFileFromDirectory(fileInfo.file_path.valueOf())
             if (deletedFile) {
-            
+
               return {
                 statusCode: 200,
                 message: "File Uploaded & processed successfully",
-                data: updatedFile
+                //   data: updatedFile
               }
             }
           } else {
@@ -97,6 +97,7 @@ export class FileController {
       }
       throw new NotFoundException("User doesn't exist in request")
     } catch (err) {
+      console.log(err)
       if (err instanceof BadRequestException || err instanceof NotFoundException) {
         throw err
       }
@@ -119,7 +120,7 @@ export class FileController {
   @Throttle_Ttl(6000)
   async getUserFiles(@Req() request: Express.Request): Promise<{ statusCode: Number, message: String, data: FileModel[] }> {
     try {
-    
+
       const user = request['user'] as JWTPayloadModel
       if (user && user._id) {
         const files = await this.fileService.getAllFilesOfUser(user._id);
@@ -177,7 +178,7 @@ export class FileController {
   @ApiTags("Files")
   @Put("/fileTags")
   @ApiQuery({ name: "fileId", type: DeleteFileDto })
-  @ApiBody({type: UpdateFileTagsDto})
+  @ApiBody({ type: UpdateFileTagsDto })
   @ApiBearerAuth()
   @ApiOkResponse(createApiResponseSchema(200, "Success", "File Tag updated successfully.", {
     data: {
@@ -205,5 +206,32 @@ export class FileController {
     }
   }
 
+  @Post('evaluateFiles')
+  @ApiTags("Files")
+  @ApiExtraModels(EvaluateFilesDto, EvaluationResponse)
+  @ApiBody({ type: EvaluateFilesDto })
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+ 
+  @ApiOkResponse(createApiResponseSchema(200, "Success", "Files evaluated successfully.", {
+    data:
+    {
+      $ref: getSchemaPath(EvaluationResponse),
+    }
+  }))
+  async evaluateFiles(@Req() request: Express.Request, @Body() evaluateFilesDto: EvaluateFilesDto): Promise<EvaluationResponse> {
+    try {
+      const user = request['user'] as JWTPayloadModel
+      const { files = [], urls = [] } = evaluateFilesDto;
+      const evaluation = await this.fileService.evaluateFiles(user._id.valueOf(), files, urls);
+      return {
+        statusCode: 200,
+        message: "Files evaluated successfully.",
+        data: evaluation
+      }
+    } catch (error) {
+      throw new InternalServerErrorException()
+    }
+  }
 
 }

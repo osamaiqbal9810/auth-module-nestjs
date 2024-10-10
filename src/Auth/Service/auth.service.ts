@@ -25,7 +25,7 @@ export class AuthService {
         })
 
         if (!existingUser?.isVerified) {
-            throw new BadRequestException("User is not verified. PLease verify email address then continue signing in.")
+            throw new BadRequestException("User is not verified. Please verify email address then continue signing in.")
         }
         if (existingUser?.source == "google") {
             throw new BadRequestException(`This email is associated with some gmail based account. Continue using app through gmail login`)

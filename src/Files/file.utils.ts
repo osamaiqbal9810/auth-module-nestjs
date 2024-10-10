@@ -36,10 +36,12 @@ export class FileUtilsService {
   ) => {
     try {
       const fileExt = extname(file.originalname)
-      
+      console.log(fileExt)
       if (Object.values(AllowedFileTypes).includes(fileExt as AllowedFileTypes)) {
         // storage Quota implementation
+     
         const user = await FileUtilsService.getUserFromRequest(req)
+        console.log(user)
         // Quota Implementation
         let totalUserFilesSize: bigint = BigInt(0);
         user.files.forEach((file) => {
@@ -65,6 +67,7 @@ export class FileUtilsService {
 
 
   static getUserFromRequest = async (request: Request) => {
+    console.log(request)
     const userObj = request['user'] as JWTPayloadModel
     if (!userObj || !userObj._id) {
       throw new BadRequestException({ message: "No user found. Invalid authorization token" });

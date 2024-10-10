@@ -129,7 +129,7 @@ export class FilesService {
       return new Promise((resolve, reject) => {
         // Start the Python process
         const pythonProcess = spawn('python', ['./src/Files/fileProcessing.py']);
-    
+    //  const pythonProcess = spawn('python', ['../../../MilvusServer-main/p1_store_files_embeddings.py']);
         // Write the input data to the Python script
         pythonProcess.stdin.write(JSON.stringify(inputData));
         pythonProcess.stdin.end(); // Close the stdin to signal that we're done sending data
@@ -164,6 +164,38 @@ export class FilesService {
       console.error('Error executing Python script:', error);
       throw new Error('Failed to process file');
     }
+  }
+
+  async evaluateFiles(userId: string, files: string[] = [], urls: string[] = []) {
+    // Fetch all relevant files from the database in one query
+
+    const allFiles = await this.prismaService.files.findMany({
+      where: {
+          userId: userId, // Filtering by user ID
+      },
+      select: {
+        originalFileName: true, // Only fetch the 'name' field to minimize data load
+      },
+    });
+
+    // Create a set of file names for quick lookup
+    const existingFileNames = new Set(allFiles.map((file) => file.originalFileName));
+    // Check which files already exist
+    const evaluatedFiles = files.map((filename) => ({
+      filename,
+      alreadyExists: existingFileNames.has(filename),
+    }));
+
+    // Check which URLs already exist
+    const evaluatedUrls = urls.map((url) => ({
+      filename: url,
+      alreadyExists: existingFileNames.has(url),
+    }));
+
+    return {
+      files: evaluatedFiles,
+      urls: evaluatedUrls,
+    };
   }
   
 }
